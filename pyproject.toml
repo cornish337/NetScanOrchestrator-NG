@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "netscan-orchestrator-next"
+version = "0.1.0"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.115.0"
+uvicorn = {extras=["standard"], version="^0.30.0"}
+sqlalchemy = "^2.0.30"
+aiosqlite = "^0.20.0"
+alembic = "^1.16.0"
+pydantic = "^2.7.0"
+
+[tool.poetry.group.dev.dependencies]
+httpx = "^0.27.0"
+pytest = "^8.0.0"
