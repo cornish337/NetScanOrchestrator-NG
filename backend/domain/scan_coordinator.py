@@ -3,9 +3,12 @@ import asyncio
 from pathlib import Path
 from typing import Sequence
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update
+from sqlalchemy import update
 from ..infra import models
+from ..infra.ws_hub import ws_manager
 from .runner import run_nmap_batch
+from .task_registry import TASKS
+from .xml_summary import parse_xml_summary
 
 # very simple chunker
 def chunk(seq: Sequence[str], size: int):
@@ -25,37 +28,51 @@ async def start_scan(
     db.add(scan)
     await db.flush()  # obtain scan.id
 
-    batches = []
+    batches: list[models.Batch] = []
     for t in chunk(targets, chunk_size):
         b = models.Batch(scan_id=scan.id, status="queued", target_count=len(t), args_json={"targets": t})
         db.add(b); batches.append(b)
     await db.commit()
 
     sem = asyncio.Semaphore(concurrency)
-    task_registry: dict[int, asyncio.Task] = {}
 
     async def run_one(b: models.Batch):
         async with sem:
-            # mark running
             await db.execute(update(models.Batch).where(models.Batch.id == b.id).values(status="running"))
             await db.commit()
+            await ws_manager.broadcast(scan.id, {"event": "batch_start", "batch_id": b.id, "targets": b.args_json["targets"]})
 
-            # stream lines (you can forward to WS)
-            async for _ in run_nmap_batch(b.id, b.args_json["targets"], nmap_flags, out_dir):
-                pass
+            xml_path = Path(out_dir) / f"batch_{b.id}.xml"
+            stdout_path = Path(out_dir) / f"batch_{b.id}.stdout.log"
+            stderr_path = Path(out_dir) / f"batch_{b.id}.stderr.log"
 
-            # mark done (for demo; capture files via runner naming)
+            async for line in run_nmap_batch(b.id, b.args_json["targets"], nmap_flags, out_dir):
+                await ws_manager.broadcast(scan.id, {"event": "line", "batch_id": b.id, "line": line})
+
+            # upsert raw result row
+            rr = models.ResultRaw(batch_id=b.id, xml_path=str(xml_path), stdout_path=str(stdout_path), stderr_path=str(stderr_path))
+            db.add(rr)
             await db.execute(update(models.Batch).where(models.Batch.id == b.id).values(status="completed"))
             await db.commit()
 
+            # quick summary for demo
+            summary = parse_xml_summary(xml_path)
+            await ws_manager.broadcast(scan.id, {"event": "batch_complete", "batch_id": b.id, "summary": summary})
+
+    tasks = []
     for b in batches:
-        task_registry[b.id] = asyncio.create_task(run_one(b))
+        t = asyncio.create_task(run_one(b))
+        TASKS.add(scan.id, b.id, t)
+        tasks.append(t)
 
-    # Wait for all batches
-    await asyncio.gather(*task_registry.values())
+    await asyncio.gather(*tasks, return_exceptions=True)
 
-    # Finish scan
     await db.execute(update(models.Scan).where(models.Scan.id == scan.id).values(status="completed"))
     await db.commit()
+    await ws_manager.broadcast(scan.id, {"event": "scan_complete", "scan_id": scan.id})
+
+    # cleanup registry entries for this scan
+    for b in batches:
+        TASKS.remove(scan.id, b.id)
 
     return scan.id
