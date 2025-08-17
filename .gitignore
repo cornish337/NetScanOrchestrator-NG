@@ -209,3 +209,5 @@ __marimo__/
 # Runtime data
 data/*
 !data/.gitkeep
+/legacy/
+/update_scratch/
