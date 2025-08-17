@@ -4,7 +4,9 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..infra.db import SessionLocal
 from ..infra import models
+from ..infra.ws_hub import ws_manager
 from ..domain.scan_coordinator import start_scan
+from ..domain.task_registry import TASKS
 
 router = APIRouter()
 
@@ -46,15 +48,18 @@ async def scans_start(payload: StartScanIn, db: AsyncSession = Depends(get_db)):
     )
     return {"scan_id": scan_id, "status": "started"}
 
-# Simple WS that could stream notifications (placeholder)
+@router.post("/scans/{scan_id}/stop")
+async def scans_stop(scan_id: int):
+    await TASKS.cancel_scan(scan_id)
+    return {"scan_id": scan_id, "status": "stopping"}
+
 @router.websocket("/ws/scans/{scan_id}")
 async def ws_scans(ws: WebSocket, scan_id: int):
-    await ws.accept()
+    await ws_manager.connect(scan_id, ws)
     try:
         await ws.send_json({"event": "connected", "scan_id": scan_id})
-        # In a real impl you'd subscribe this connection to events from the runner
-        # for now, just keep alive:
         while True:
+            # keepalive; you could accept pings or client messages here
             await ws.receive_text()
     except WebSocketDisconnect:
-        pass
+        ws_manager.disconnect(scan_id, ws)
