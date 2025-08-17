@@ -211,3 +211,5 @@ data/*
 !data/.gitkeep
 /legacy/
 /update_scratch/
+/frontend/node_modules/
+/frontend/package-lock.json
