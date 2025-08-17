@@ -2,3 +2,4 @@
 	path = legacy
 	url = https://github.com/cornish337/NetScanOrchestrator.git
 	branch = main
+	ignore = all
