@@ -14,7 +14,7 @@ export default function HostList({ scanId }: { scanId: number }) {
 
   if (hostsQ.isLoading) return <div>Loading hosts...</div>;
   if (hostsQ.isError) return <div className="text-red-600">Failed to load hosts</div>;
-  if (hostsQ.data.length === 0) return null;
+  if (!hostsQ.data || hostsQ.data.length === 0) return null;
 
   return (
     <div className="mt-4">

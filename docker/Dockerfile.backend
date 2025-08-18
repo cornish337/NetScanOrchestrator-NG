@@ -7,10 +7,8 @@ WORKDIR /app
 # Build stage
 FROM base AS build
 RUN apt-get update && apt-get install -y --no-install-recommends build-essential && rm -rf /var/lib/apt/lists/*
-COPY backend/pyproject.toml backend/poetry.lock* ./
-RUN pip install --no-cache-dir uv
-RUN uv pip compile pyproject.toml -o requirements.txt && \
-    pip wheel --no-cache-dir --wheel-dir /wheels -r requirements.txt
+COPY requirements.txt ./
+RUN pip wheel --no-cache-dir --wheel-dir /wheels -r requirements.txt
 
 # Runtime
 FROM base AS runtime
@@ -19,7 +17,7 @@ COPY --from=build /wheels /wheels
 COPY --from=build /app/requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir --no-index --find-links=/wheels -r /app/requirements.txt
 
-COPY backend /app/backend
+COPY backend/ /app/backend/
 
 USER app
 EXPOSE 8000

@@ -28,7 +28,7 @@ export default function ScanList({ projectId }: { projectId: number }) {
         <div className="text-red-600">Failed to load scans</div>
       ) : (
         <>
-          {scansQ.data.length === 0 ? (
+          {!scansQ.data || scansQ.data.length === 0 ? (
             <div className="text-slate-500">No scans yet.</div>
           ) : (
             <div className="space-y-4">

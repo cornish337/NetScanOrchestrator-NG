@@ -9,6 +9,7 @@ export default function HostDetails({ hostId }: { hostId: number }) {
 
   if (hostQ.isLoading) return <div>Loading host details...</div>;
   if (hostQ.isError) return <div className="text-red-600">Failed to load host details</div>;
+  if (!hostQ.data) return <div>No data</div>;
 
   const { address, hostname, status, ports } = hostQ.data;
 

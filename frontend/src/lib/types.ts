@@ -48,9 +48,15 @@ export interface ScanCompleteEvent {
   scan_id: number;
 }
 
+export interface LegacyScanCompleteEvent {
+  event: "legacy_scan_complete";
+  results: any;
+}
+
 export type WSEvent =
   | ConnectedEvent
   | LineEvent
   | BatchStartEvent
   | BatchCompleteEvent
-  | ScanCompleteEvent;
+  | ScanCompleteEvent
+  | LegacyScanCompleteEvent;
