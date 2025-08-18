@@ -25,7 +25,7 @@ export default function IPDetailsPage() {
           <div className="text-red-600">Failed to load history</div>
         ) : (
           <>
-            {historyQ.data.length === 0 ? (
+            {!historyQ.data || historyQ.data.length === 0 ? (
               <div className="text-slate-500">No scan history for this IP.</div>
             ) : (
               <table className="table-auto w-full">
