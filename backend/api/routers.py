@@ -88,6 +88,7 @@ class StartScanIn(BaseModel):
     project_id: int
     nmap_flags: list[str] = ["-T4", "-Pn", "-sS"]
     targets: list[str]
+    runner: str = "asyncio"
     chunk_size: int = 256
     concurrency: int = 6
 
@@ -135,6 +136,7 @@ async def scans_start(payload: StartScanIn, db: AsyncSession = Depends(get_db)):
         project_id=payload.project_id,
         nmap_flags=payload.nmap_flags,
         targets=payload.targets,
+        runner=payload.runner,
         chunk_size=payload.chunk_size,
         concurrency=payload.concurrency,
     )

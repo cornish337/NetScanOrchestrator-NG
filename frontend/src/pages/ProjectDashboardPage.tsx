@@ -12,6 +12,7 @@ export default function ProjectDashboardPage() {
   const [targets, setTargets] = useState<string[]>([]);
   const [chunkSize, setChunkSize] = useState(256);
   const [nmapFlags, setNmapFlags] = useState("-T4 -Pn -sS");
+  const [runner, setRunner] = useState("asyncio");
 
   const startScanM = useMutation({
     mutationFn: () =>
@@ -21,6 +22,7 @@ export default function ProjectDashboardPage() {
         targets: targets,
         chunk_size: chunkSize,
         concurrency: 6, // You might want to make this configurable
+        runner: runner,
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["scans", projectIdNum] });
@@ -47,6 +49,17 @@ export default function ProjectDashboardPage() {
               value={nmapFlags}
               onChange={(e) => setNmapFlags(e.target.value)}
             />
+          </div>
+          <div>
+            <label className="label">Runner</label>
+            <select
+              className="input"
+              value={runner}
+              onChange={(e) => setRunner(e.target.value)}
+            >
+              <option value="asyncio">Asyncio</option>
+              <option value="multiprocessing">Legacy Parallel</option>
+            </select>
           </div>
         </div>
         <div className="flex items-center gap-3">
