@@ -25,15 +25,11 @@ The `docker-compose.yml` file at the root of the project defines the services th
 -   **Depends On:** It depends on the `db` service, so Docker Compose will start the database before starting the API.
 -   **Capabilities:** `cap_add: [NET_RAW, NET_ADMIN]` is necessary for Nmap to perform certain types of scans (like SYN scans) from within the container.
 
-#### `nginx`
+#### `gateway`
 
--   **Image:** `nginx:1.27-alpine`
--   **Purpose:** This service acts as a reverse proxy.
+-   **Build:** This service is built from the `docker/Dockerfile.gateway` file.
+-   **Purpose:** This service acts as a gateway to the application. It serves the frontend and proxies requests to the `api` service.
 -   **Ports:** It exposes port `80` on the host machine.
--   **Volumes:** It mounts the `ops/nginx.conf` file into the container. This file configures Nginx to:
-    -   Serve the static frontend files.
-    -   Proxy requests to `/api` to the `api` service.
-    -   Handle WebSocket upgrades for the `/ws` path.
 -   **Depends On:** It depends on the `api` service.
 
 ### Volumes
@@ -41,13 +37,27 @@ The `docker-compose.yml` file at the root of the project defines the services th
 -   **`dbdata`:** Persists the PostgreSQL database data.
 -   **`outputs`:** Persists the Nmap scan output files.
 
-## `docker/Dockerfile.backend`
+## Dockerfiles
+
+### `docker/Dockerfile.backend`
 
 This Dockerfile defines the image for the `api` service.
 
--   **Base Image:** It starts from a `python:3.11-slim` base image.
--   **Poetry:** It installs Poetry, the dependency manager for the backend.
--   **Nmap:** It installs `nmap`, which is required by the backend to run scans.
--   **Dependencies:** It copies the `pyproject.toml` and `poetry.lock` files and installs the Python dependencies using Poetry. This is done in a separate layer to take advantage of Docker's layer caching.
+-   **Base Image:** It starts from a `python:3.12-slim` base image.
+-   **Dependencies:** It copies the `requirements.txt` file and installs the Python dependencies using `pip`. This is done in a separate layer to take advantage of Docker's layer caching.
 -   **Application Code:** It copies the backend application code into the image.
 -   **Command:** The default command runs the application using `gunicorn` with `uvicorn` workers, which is a production-ready setup for a FastAPI application.
+
+### `docker/Dockerfile.gateway`
+
+This Dockerfile defines the image for the `gateway` service. It's a multi-stage build.
+
+-   **Frontend Build Stage:**
+    -   **Base Image:** `node:20-slim`
+    -   **Purpose:** This stage builds the static frontend assets.
+    -   It installs the npm dependencies and runs the `npm run build` script.
+-   **Final Stage:**
+    -   **Base Image:** `nginx:1.27-alpine`
+    -   **Purpose:** This stage serves the built frontend.
+    -   It copies the built assets from the frontend build stage.
+    -   It also copies the `ops/nginx.conf` file to configure nginx.
