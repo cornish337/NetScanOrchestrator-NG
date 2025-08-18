@@ -25,7 +25,7 @@ export default function Projects() {
           <div className="text-red-600">Failed to load projects</div>
         ) : (
           <>
-            {projectsQ.data.length === 0 ? (
+          {!projectsQ.data || projectsQ.data.length === 0 ? (
               <div className="text-slate-500">No projects yet — create one.</div>
             ) : (
               <table className="table-auto w-full">
