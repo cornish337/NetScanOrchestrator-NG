@@ -2,6 +2,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from pathlib import Path
 import time
 import re
@@ -141,6 +142,20 @@ async def scans_start(payload: StartScanIn, db: AsyncSession = Depends(get_db)):
         concurrency=payload.concurrency,
     )
     return {"scan_id": scan_id, "status": "started"}
+
+@router.get("/scans/{scan_id}/hosts")
+async def list_scan_hosts(scan_id: int, db: AsyncSession = Depends(get_db)):
+    query = select(models.Host).where(models.Host.scan_id == scan_id)
+    rows = (await db.execute(query)).scalars().all()
+    return rows
+
+@router.get("/hosts/{host_id}")
+async def get_host_details(host_id: int, db: AsyncSession = Depends(get_db)):
+    query = select(models.Host).where(models.Host.id == host_id).options(selectinload(models.Host.ports))
+    row = (await db.execute(query)).scalar_one_or_none()
+    if not row:
+        raise HTTPException(status_code=404, detail="Host not found")
+    return row
 
 @router.post("/scans/{scan_id}/stop")
 async def scans_stop(scan_id: int):

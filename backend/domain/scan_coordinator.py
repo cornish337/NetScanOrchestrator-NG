@@ -10,6 +10,7 @@ from .runner import run_nmap_batch
 from .task_registry import TASKS
 from .xml_summary import parse_xml_summary
 from .legacy_scanner.parallel_scanner import scan_chunks_parallel
+from .xml_parser import parse_nmap_xml
 
 # very simple chunker
 def chunk(seq: Sequence[str], size: int):
@@ -63,6 +64,21 @@ async def start_scan(
                 # quick summary for demo
                 summary = parse_xml_summary(xml_path)
                 await ws_manager.broadcast(scan.id, {"event": "batch_complete", "batch_id": b.id, "summary": summary})
+
+                # --- START of new code ---
+            if xml_path.exists():
+                xml_content = xml_path.read_text()
+                if xml_content:
+                    hosts = parse_nmap_xml(xml_content)
+                    for host in hosts:
+                        host.scan_id = scan.id
+                        db.add(host)
+                    await db.commit()
+            # --- END of new code ---
+
+            # quick summary for demo
+            summary = parse_xml_summary(xml_path)
+            await ws_manager.broadcast(scan.id, {"event": "batch_complete", "batch_id": b.id, "summary": summary})
 
         tasks = []
         for b in batches:

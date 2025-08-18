@@ -110,3 +110,34 @@ export async function stopScan(scanId: number) {
   if (!res.ok) throw new Error("Failed to stop scan");
   return res.json();
 }
+
+export interface Port {
+  id: number;
+  port_number: number;
+  protocol: string;
+  state: string;
+  service_name?: string;
+  service_product?: string;
+  service_version?: string;
+}
+
+export interface Host {
+  id: number;
+  scan_id: number;
+  address: string;
+  hostname?: string;
+  status: string;
+  ports: Port[];
+}
+
+export async function listScanHosts(scanId: number): Promise<Host[]> {
+  const res = await fetch(apiUrl(`/scans/${scanId}/hosts`));
+  if (!res.ok) throw new Error("Failed to list scan hosts");
+  return res.json();
+}
+
+export async function getHostDetails(hostId: number): Promise<Host> {
+  const res = await fetch(apiUrl(`/hosts/${hostId}`));
+  if (!res.ok) throw new Error("Failed to get host details");
+  return res.json();
+}
