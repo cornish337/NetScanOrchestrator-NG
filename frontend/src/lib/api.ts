@@ -1,4 +1,4 @@
-const API_BASE = (import.meta as any).env?.VITE_API_BASE || "";
+const API_BASE = "/api";
 
 function apiUrl(path: string): string {
   return `${API_BASE}${path}`;
@@ -6,7 +6,7 @@ function apiUrl(path: string): string {
 
 export function wsUrl(path: string): string {
   const proto = location.protocol === "https:" ? "wss" : "ws";
-  return `${proto}://${location.host}${API_BASE}${path}`;
+  return `${proto}://${location.host}${path}`;
 }
 
 export interface Project {
