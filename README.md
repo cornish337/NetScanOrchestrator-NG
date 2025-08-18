@@ -68,3 +68,23 @@ Run as root **or** add `--cap-add=NET_RAW --cap-add=NET_ADMIN`. If capabilities 
 - Parsing: proper Nmap XML into `host_results`/`port_results` tables.
 - Auth & multi-user support.
 - CLI wrapper using Typer.
+
+Migrations
+
+Note that Alembic expects logging sections in alembic.ini; include the minimal block above or document the env.py guard. 
+Alembic
+
+Mention the sys.path line (or PYTHONPATH) so backend imports succeed when Alembic runs env.py. 
+GitHub
+
+Troubleshooting
+
+KeyError: 'formatters' → add logging sections or guard fileConfig() in env.py. 
+Stack Overflow
+
+“No config file found” or wrong path → run Alembic from the repo root or use -c. 
+Stack Overflow
+
+Architecture
+
+Add the status endpoint and the WS events the frontend consumes.

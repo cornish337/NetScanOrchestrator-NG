@@ -8,9 +8,6 @@ from alembic import context
 # make "backend" importable
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-# add temporarily at the top of alembic/env.py
-print("ALEMBIC URL:", context.config.get_main_option("sqlalchemy.url"))
-
 from backend.infra.db import Base
 target_metadata = Base.metadata
 
