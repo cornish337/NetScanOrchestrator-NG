@@ -11,6 +11,7 @@ from ..infra.ws_hub import ws_manager
 from ..domain.scan_coordinator import start_scan
 from ..domain.task_registry import TASKS
 from ..domain.runner import run_nmap_batch
+from ..domain.target_expander import expand_targets
 
 router = APIRouter()
 
@@ -32,6 +33,56 @@ async def create_project(payload: ProjectIn, db: AsyncSession = Depends(get_db))
 async def list_projects(db: AsyncSession = Depends(get_db)):
     rows = (await db.execute(models.Project.__table__.select())).mappings().all()
     return rows
+
+@router.get("/projects/{project_id}/scans")
+async def list_project_scans(project_id: int, db: AsyncSession = Depends(get_db)):
+    query = models.Scan.__table__.select().where(models.Scan.project_id == project_id)
+    rows = (await db.execute(query)).mappings().all()
+    return rows
+
+@router.get("/scans/{scan_id}/batches")
+async def list_scan_batches(scan_id: int, db: AsyncSession = Depends(get_db)):
+    query = models.Batch.__table__.select().where(models.Batch.scan_id == scan_id)
+    rows = (await db.execute(query)).mappings().all()
+    # This is inefficient, we should probably store targets in their own table
+    # and link them to batches. For now, we'll just return the args.
+    return [dict(row, targets=row["args_json"].get("targets", [])) for row in rows]
+
+from sqlalchemy import select
+
+@router.get("/targets/{address}/history")
+async def get_target_history(address: str, db: AsyncSession = Depends(get_db)):
+    # Find the project associated with the target address
+    project_query = select(models.Project).join(models.Target).where(models.Target.address == address)
+    project_result = (await db.execute(project_query)).scalar_one_or_none()
+
+    if not project_result:
+        return []
+
+    # Find all scans for that project
+    scan_query = select(models.Scan).where(models.Scan.project_id == project_result.id)
+    scans = (await db.execute(scan_query)).scalars().all()
+
+    # For each scan, find the batches that contain the target
+    results = []
+    for scan in scans:
+        for batch in scan.batches:
+            # This is not efficient, but it's a start.
+            # We would need to store the targets for each batch to do this properly.
+            # For now, we'll just check if the address is in the args.
+            if any(address in arg for arg in batch.args_json.get("targets", [])):
+                results.append(scan)
+                break
+
+    return results
+
+class ExpandTargetsIn(BaseModel):
+    targets: list[str]
+
+@router.post("/targets/expand")
+async def expand_targets_api(payload: ExpandTargetsIn):
+    expanded = expand_targets(payload.targets)
+    return {"targets": expanded}
 
 class StartScanIn(BaseModel):
     project_id: int
