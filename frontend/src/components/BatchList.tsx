@@ -17,7 +17,7 @@ export default function BatchList({ scanId }: { scanId: number }) {
         <div className="text-red-600">Failed to load batches</div>
       ) : (
         <>
-          {batchesQ.data.length === 0 ? (
+          {!batchesQ.data || batchesQ.data.length === 0 ? (
             <div className="text-slate-500">No batches yet.</div>
           ) : (
             <table className="table-auto w-full">

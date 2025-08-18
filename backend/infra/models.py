@@ -1,6 +1,6 @@
 from __future__ import annotations
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey, String, Integer, DateTime, Text, JSON
 from .db import Base
@@ -32,6 +32,7 @@ class Scan(Base):
     finished_at: Mapped[Optional[datetime]] = mapped_column(DateTime, default=None)
     project: Mapped["Project"] = relationship(back_populates="scans")
     batches: Mapped[list["Batch"]] = relationship(back_populates="scan")
+    hosts: Mapped[List["Host"]] = relationship(back_populates="scan")
 
 class Batch(Base):
     __tablename__ = "batches"
@@ -54,3 +55,25 @@ class ResultRaw(Base):
     stderr_path: Mapped[str] = mapped_column(String(512))
     parsed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, default=None)
     batch: Mapped["Batch"] = relationship(back_populates="result_raw")
+
+class Host(Base):
+    __tablename__ = "hosts"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    scan_id: Mapped[int] = mapped_column(ForeignKey("scans.id"), index=True)
+    address: Mapped[str] = mapped_column(String(255), index=True)
+    hostname: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    status: Mapped[str] = mapped_column(String(32), index=True)
+    scan: Mapped["Scan"] = relationship(back_populates="hosts")
+    ports: Mapped[List["Port"]] = relationship(back_populates="host")
+
+class Port(Base):
+    __tablename__ = "ports"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    host_id: Mapped[int] = mapped_column(ForeignKey("hosts.id"), index=True)
+    port_number: Mapped[int] = mapped_column(Integer)
+    protocol: Mapped[str] = mapped_column(String(16))
+    state: Mapped[str] = mapped_column(String(32))
+    service_name: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    service_product: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    service_version: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    host: Mapped["Host"] = relationship(back_populates="ports")

@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listProjectScans, stopScan, type Scan } from "../lib/api";
 import BatchList from "./BatchList";
+import LiveLog from "./LiveLog";
+import HostList from "./HostList";
 
 export default function ScanList({ projectId }: { projectId: number }) {
   const qc = useQueryClient();
@@ -26,7 +28,7 @@ export default function ScanList({ projectId }: { projectId: number }) {
         <div className="text-red-600">Failed to load scans</div>
       ) : (
         <>
-          {scansQ.data.length === 0 ? (
+          {!scansQ.data || scansQ.data.length === 0 ? (
             <div className="text-slate-500">No scans yet.</div>
           ) : (
             <div className="space-y-4">
@@ -48,6 +50,8 @@ export default function ScanList({ projectId }: { projectId: number }) {
                     )}
                   </div>
                   <BatchList scanId={scan.id} />
+                  {scan.status === "running" && <LiveLog scanId={scan.id} />}
+                  <HostList scanId={scan.id} />
                 </div>
               ))}
             </div>
