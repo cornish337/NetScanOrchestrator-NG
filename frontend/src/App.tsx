@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import LiveLog from "./components/LiveLog";
-import type { Project } from "./lib/types";
 import NmapRunner from "./components/NmapRunner";
 import { createProject, listProjects, startScan, type Project } from "./lib/api";
 
