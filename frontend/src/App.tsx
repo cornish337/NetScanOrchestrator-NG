@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import LiveLog from "./components/LiveLog";
-import { createProject, listProjects, startScan, type Project } from "./lib/api";
+import { createProject, listProjects, startScan } from "./lib/api";
+import type { Project } from "./lib/types";
 
 export default function App() {
   const qc = useQueryClient();
