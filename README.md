@@ -1,90 +1,62 @@
-# NetScan Orchestrator Next — Sprint 1
+# NetScanOrchestrator-NG
 
-This repository contains the early backend scaffold for NetScan Orchestrator Next.
-
-## Changelog (this update)
-
-**Backend**
-- Added a WebSocket connection manager for per-scan broadcasting.
-- Wired the scan coordinator to emit realtime events.
-- Persist raw outputs (XML/stdout/stderr) in `results_raw` table after each batch.
-- Introduced a stop endpoint that cancels in-flight batches for a scan.
-- Added a tiny XML summary parser to showcase post-processing.
-- Documented run instructions and Docker capability notes.
-
-**Frontend**
-- Added a Vite + React + TypeScript UI with Tailwind and TanStack Query.
-- Lists projects, allows starting scans, and streams live output via WebSocket.
-
-**Docs**
-- This changelog, TODO list, runbook, and frontend quickstart captured here.
-
-## Install & Run
-
-### Backend
-- Python 3.11+, Nmap installed
-- Setup:
-
+## Quick start (Docker Compose)
 ```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -U pip
-pip install fastapi uvicorn[standard] sqlalchemy aiosqlite alembic pydantic
-mkdir -p data/outputs
-alembic revision --autogenerate -m "init" && alembic upgrade head
-uvicorn backend.app:app --reload --port 8000
+git clone https://github.com/cornish337/NetScanOrchestrator-NG.git
+cd NetScanOrchestrator-NG
+cp .env.example .env   # edit values as needed
+docker compose up -d --build
 ```
 
-### Frontend
-- Node 18+
-- Setup:
+- API: [http://localhost/](http://localhost/)
+- Docs: [http://localhost/docs](http://localhost/docs)
+- WebSockets: `ws://localhost/ws/{scan_id}`
 
-```bash
-cd frontend
-npm install
-npm run dev
+## Configuration
+
+Environment variables (prefix `NSO_`):
+
+- `NSO_DATABASE_URL` – Postgres DSN (e.g., `postgresql+psycopg://postgres:netscan@db:5432/netscan`)
+- `NSO_OUTPUT_DIR` – Directory for scan outputs (mounted volume)
+- `NSO_NMAP_PATH` – Path to `nmap`
+
+## Usage
+
+### Start a scan
+
+```http
+POST /api/scans
+{"targets": ["scanme.nmap.org"], "options": ["-sS", "-Pn", "-T4", "-oX", "/data/outputs/<scan_id>/batch0.xml"]}
 ```
 
-If your backend is on a different origin, create `.env` in `frontend/` with `VITE_API_BASE=http://localhost:8000`.
+Response
 
-## Architecture
-- **Backend:** FastAPI REST API and WebSocket endpoints backed by an async subprocess runner that orchestrates Nmap scans.
-- **Data model:** Projects → Scans → Batches with raw results saved for each batch.
-- **Frontend:** Vite + React + TypeScript, styled with Tailwind. TanStack Query handles data fetching and caching. WebSocket events provide live log streaming.
+```json
+{"scan_id": "<id>"}
+```
 
-## Realtime protocol
-JSON events broadcast over `/ws/scans/{id}`:
-- `{ "event":"connected", "scan_id":<id> }`
-- `{ "event":"batch_start", "batch_id":<id>, "targets":[...] }`
-- `{ "event":"line", "batch_id":<id>, "line":"..." }`
-- `{ "event":"batch_complete", "batch_id":<id>, "summary":{hosts_up,open_ports} }`
-- `{ "event":"scan_complete", "scan_id":<id> }`
+### Stream live output
 
-## Docker (SYN scans)
-Run as root **or** add `--cap-add=NET_RAW --cap-add=NET_ADMIN`. If capabilities aren’t present, the runner falls back to `-sT`.
+Connect your client to `ws://<host>/ws/<scan_id>` and display each line as it arrives.
+
+### Stop a scan
+
+```http
+POST /api/scans/{scan_id}/stop
+```
+
+### Parsing
+
+The service expects `-oX` outputs; a minimal parser reads XML into host/port summaries. Extend `backend/app/xml_parser.py` for richer data.
+
+## Deployment
+
+- Runs with Gunicorn/Uvicorn. Use Nginx in front for HTTP+WS proxying.
+- For SYN scans inside containers, run with `cap_add: [NET_RAW, NET_ADMIN]` (or use TCP scans `-sT`).
+- Apply DB migrations on deploy: `alembic upgrade head`.
 
 ## Roadmap
-- Persistence polish with transactional batch finish and optional Postgres.
-- Resilience features such as retry/resplit and supervisor for recovery.
-- Parsing: proper Nmap XML into `host_results`/`port_results` tables.
-- Auth & multi-user support.
-- CLI wrapper using Typer.
 
-Migrations
-
-Note that Alembic expects logging sections in alembic.ini; include the minimal block above or document the env.py guard. 
-Alembic
-
-Mention the sys.path line (or PYTHONPATH) so backend imports succeed when Alembic runs env.py. 
-GitHub
-
-Troubleshooting
-
-KeyError: 'formatters' → add logging sections or guard fileConfig() in env.py. 
-Stack Overflow
-
-“No config file found” or wrong path → run Alembic from the repo root or use -c. 
-Stack Overflow
-
-Architecture
-
-Add the status endpoint and the WS events the frontend consumes.
+- Redis pub/sub for WS fan-out
+- Auth and RBAC
+- Full XML → relational summaries
