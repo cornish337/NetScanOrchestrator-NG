@@ -55,6 +55,8 @@ async def scans_stop(scan_id: int):
 
 @router.websocket("/ws/scans/{scan_id}")
 async def ws_scans(ws: WebSocket, scan_id: int):
+    """Handle WebSocket connections for the given ``scan_id``."""
+
     await ws_manager.connect(scan_id, ws)
     try:
         await ws.send_json({"event": "connected", "scan_id": scan_id})
