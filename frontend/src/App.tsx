@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import LiveLog from "./components/LiveLog";
-import { createProject, listProjects, startScan } from "./lib/api";
 import type { Project } from "./lib/types";
+import NmapRunner from "./components/NmapRunner";
+import { createProject, listProjects, startScan, type Project } from "./lib/api";
+
 
 export default function App() {
   const qc = useQueryClient();
@@ -144,6 +146,9 @@ export default function App() {
           {activeScanId && <div className="text-slate-600">Active scan: #{activeScanId}</div>}
         </div>
       </section>
+
+      {/* Nmap runner */}
+      <NmapRunner />
 
       {/* Live log */}
       {activeScanId && (

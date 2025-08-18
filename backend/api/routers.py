@@ -1,12 +1,16 @@
 from __future__ import annotations
-from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
+from pathlib import Path
+import time
+import re
 from ..infra.db import SessionLocal
 from ..infra import models
 from ..infra.ws_hub import ws_manager
 from ..domain.scan_coordinator import start_scan
 from ..domain.task_registry import TASKS
+from ..domain.runner import run_nmap_batch
 
 router = APIRouter()
 
@@ -36,6 +40,43 @@ class StartScanIn(BaseModel):
     chunk_size: int = 256
     concurrency: int = 6
 
+
+class NmapRunIn(BaseModel):
+    nmap_flags: list[str]
+    targets: list[str]
+
+
+@router.post("/nmap/run")
+async def nmap_run(payload: NmapRunIn):
+    batch_id = int(time.time())
+    out_dir = Path("./data/tmp")
+    lines: list[str] = []
+    stderr_path = out_dir / f"batch_{batch_id}.stderr.log"
+    try:
+        async for line in run_nmap_batch(batch_id, payload.targets, payload.nmap_flags, out_dir):
+            lines.append(line)
+    except Exception as e:
+        err_text = ""
+        if stderr_path.exists():
+            err_text = stderr_path.read_text(errors="ignore")
+        else:
+            err_text = str(e)
+        raise HTTPException(status_code=500, detail=err_text)
+
+    exit_code = 0
+    if lines and lines[-1].startswith("[runner] nmap exited with code"):
+        m = re.search(r"(\d+)$", lines[-1])
+        if m:
+            exit_code = int(m.group(1))
+
+    if exit_code != 0:
+        err_text = ""
+        if stderr_path.exists():
+            err_text = stderr_path.read_text(errors="ignore")
+        raise HTTPException(status_code=500, detail=err_text or f"nmap exited with code {exit_code}")
+
+    return {"stdout": "\n".join(lines), "exit_code": exit_code}
+
 @router.post("/scans/start")
 async def scans_start(payload: StartScanIn, db: AsyncSession = Depends(get_db)):
     scan_id = await start_scan(
@@ -55,6 +96,8 @@ async def scans_stop(scan_id: int):
 
 @router.websocket("/ws/scans/{scan_id}")
 async def ws_scans(ws: WebSocket, scan_id: int):
+    """Handle WebSocket connections for the given ``scan_id``."""
+
     await ws_manager.connect(scan_id, ws)
     try:
         await ws.send_json({"event": "connected", "scan_id": scan_id})
