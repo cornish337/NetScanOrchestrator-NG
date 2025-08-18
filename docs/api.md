@@ -42,6 +42,24 @@ List all projects.
     ]
     ```
 
+#### `GET /api/projects/{project_id}/scans`
+
+List all scans for a given project.
+
+-   **URL Parameters:**
+    -   `project_id` (integer): The ID of the project.
+-   **Response (200 OK):**
+    ```json
+    [
+      {
+        "id": 1,
+        "project_id": 1,
+        "status": "completed",
+        "created_at": "..."
+      }
+    ]
+    ```
+
 ### Scans
 
 #### `POST /api/scans/start`
@@ -80,6 +98,100 @@ Stop a running scan.
       "scan_id": 123,
       "status": "stopping"
     }
+    ```
+
+#### `GET /api/scans/{scan_id}/batches`
+
+List all batches for a given scan.
+
+-   **URL Parameters:**
+    -   `scan_id` (integer): The ID of the scan.
+-   **Response (200 OK):**
+    ```json
+    [
+      {
+        "id": 1,
+        "scan_id": 1,
+        "status": "completed",
+        "targets": ["1.1.1.1", "8.8.8.8"]
+      }
+    ]
+    ```
+
+#### `GET /api/scans/{scan_id}/hosts`
+
+List all hosts discovered in a given scan.
+
+-   **URL Parameters:**
+    -   `scan_id` (integer): The ID of the scan.
+-   **Response (200 OK):**
+    ```json
+    [
+      {
+        "id": 1,
+        "scan_id": 1,
+        "address": "127.0.0.1",
+        "hostname": "localhost"
+      }
+    ]
+    ```
+
+### Hosts
+
+#### `GET /api/hosts/{host_id}`
+
+Get detailed information about a specific host, including its open ports.
+
+-   **URL Parameters:**
+    -   `host_id` (integer): The ID of the host.
+-   **Response (200 OK):**
+    ```json
+    {
+      "id": 1,
+      "scan_id": 1,
+      "address": "127.0.0.1",
+      "hostname": "localhost",
+      "ports": [
+        { "port": 80, "protocol": "tcp", "service": "http", "state": "open" }
+      ]
+    }
+    ```
+
+### Targets
+
+#### `POST /api/targets/expand`
+
+Expand a list of targets (e.g., CIDR ranges) into a list of individual IP addresses.
+
+-   **Request Body:**
+    ```json
+    {
+      "targets": ["192.168.1.0/30"]
+    }
+    ```
+-   **Response (200 OK):**
+    ```json
+    {
+      "targets": ["192.168.1.1", "192.168.1.2"]
+    }
+    ```
+
+#### `GET /api/targets/{address}/history`
+
+Get the scan history for a specific target address.
+
+-   **URL Parameters:**
+    -   `address` (string): The IP address of the target.
+-   **Response (200 OK):**
+    ```json
+    [
+      {
+        "id": 1,
+        "project_id": 1,
+        "status": "completed",
+        "created_at": "..."
+      }
+    ]
     ```
 
 ### Nmap Runner (Utility)
