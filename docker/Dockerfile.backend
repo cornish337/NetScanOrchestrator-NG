@@ -17,8 +17,14 @@ COPY --from=build /wheels /wheels
 COPY --from=build /app/requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir --no-index --find-links=/wheels -r /app/requirements.txt
 
+# Install Nmap and set capabilities for raw socket access
+RUN apt-get update && apt-get install -y --no-install-recommends nmap libcap2-bin \
+    && rm -rf /var/lib/apt/lists/* \
+    && setcap cap_net_raw,cap_net_admin,cap_net_bind_service+eip $(command -v nmap)
+
 COPY backend/ /app/backend/
 
 USER app
 EXPOSE 8000
-CMD ["/usr/local/bin/gunicorn", "-k", "uvicorn.workers.UvicornWorker", "backend.main:app", "--bind", "0.0.0.0:8000", "--workers", "2"]
+CMD ["gunicorn", "-k", "uvicorn.workers.UvicornWorker", "backend.main:app", "--bind", "0.0.0.0:8000", "--workers", "2"]
+
