@@ -1,62 +1,45 @@
 # NetScanOrchestrator-NG
 
-## Quick start (Docker Compose)
-```bash
-git clone https://github.com/cornish337/NetScanOrchestrator-NG.git
-cd NetScanOrchestrator-NG
-cp .env.example .env   # edit values as needed
-docker compose up -d --build
-```
+NetScanOrchestrator-NG is a web-based application designed to orchestrate Nmap scans, providing a user-friendly interface to manage and monitor network scanning tasks. It is built with a modern technology stack, featuring a FastAPI backend, a React frontend, and Docker for containerization.
 
-- API: [http://localhost/](http://localhost/)
-- Docs: [http://localhost/docs](http://localhost/docs)
-- WebSockets: `ws://localhost/ws/{scan_id}`
+This project is a complete rewrite of the original NetScanOrchestrator, focusing on a more robust architecture, a cleaner codebase, and improved scalability.
 
-## Configuration
+## Documentation
 
-Environment variables (prefix `NSO_`):
+This README provides a high-level overview of the project. For detailed documentation, please refer to the following files in the `docs/` directory:
 
-- `NSO_DATABASE_URL` – Postgres DSN (e.g., `postgresql+psycopg://postgres:netscan@db:5432/netscan`)
-- `NSO_OUTPUT_DIR` – Directory for scan outputs (mounted volume)
-- `NSO_NMAP_PATH` – Path to `nmap`
+- **[Installation Guide](./docs/install.md):** Instructions for setting up the project.
+- **[Usage Guide](./docs/usage.md):** How to use the application and its API.
+- **[Architecture Overview](./docs/architecture.md):** A deep dive into the project's architecture.
+- **[Frontend Documentation](./docs/frontend.md):** Details about the frontend application.
+- **[Backend Documentation](./docs/backend.md):** Details about the backend application.
+- **[API Reference](./docs/api.md):** Comprehensive documentation for the REST and WebSocket APIs.
+- **[Docker Setup](./docs/docker.md):** Information about the Docker configuration.
 
-## Usage
+## Features
 
-### Start a scan
+### Completed
+- **Web-based UI:** A React-based frontend for managing scans.
+- **Project Management:** Organize scans into projects.
+- **Nmap Scan Orchestration:** Start, and monitor Nmap scans from the UI.
+- **Live Scan Output:** Real-time streaming of scan logs via WebSockets.
+- **Concurrent Scans:** Run multiple scan batches in parallel.
+- **Target Chunking:** Split large target lists into smaller chunks for scanning.
+- **Dockerized Deployment:** Easy setup and deployment using Docker Compose.
+- **REST API:** A comprehensive API for programmatic control.
 
-```http
-POST /api/scans
-{"targets": ["scanme.nmap.org"], "options": ["-sS", "-Pn", "-T4", "-oX", "/data/outputs/<scan_id>/batch0.xml"]}
-```
+### To Be Done
+- **User Authentication and Authorization:** Secure the application with user accounts and roles.
+- **Advanced Scan Results Parsing:** More detailed parsing of Nmap XML output.
+- **Scan Scheduling:** Schedule scans to run at specific times.
+- **Notifications:** Notify users when scans are complete.
+- **Reporting:** Generate reports from scan results.
+- **Redis Pub/Sub:** For WebSocket fan-out in multi-replica deployments.
 
-Response
+## A Note on Documentation
 
-```json
-{"scan_id": "<id>"}
-```
+This project is under active development. As new features are implemented, the documentation will be updated to reflect the changes. It is crucial to maintain and update the documentation in the `docs/` directory to ensure it remains accurate and useful for developers and users.
 
-### Stream live output
+## Quick Start
 
-Connect your client to `ws://<host>/ws/<scan_id>` and display each line as it arrives.
-
-### Stop a scan
-
-```http
-POST /api/scans/{scan_id}/stop
-```
-
-### Parsing
-
-The service expects `-oX` outputs; a minimal parser reads XML into host/port summaries. Extend `backend/app/xml_parser.py` for richer data.
-
-## Deployment
-
-- Runs with Gunicorn/Uvicorn. Use Nginx in front for HTTP+WS proxying.
-- For SYN scans inside containers, run with `cap_add: [NET_RAW, NET_ADMIN]` (or use TCP scans `-sT`).
-- Apply DB migrations on deploy: `alembic upgrade head`.
-
-## Roadmap
-
-- Redis pub/sub for WS fan-out
-- Auth and RBAC
-- Full XML → relational summaries
+For a quick start with Docker, see the [Installation Guide](./docs/install.md).
