@@ -21,22 +21,15 @@ The recommended way to run NetScanOrchestrator is with Docker Compose. This meth
     cd NetScanOrchestrator-NG
     ```
 
-2.  **Configure environment variables:**
-    The project uses a `.env` file for configuration. A `.env.example` is provided as a template.
+2.  **Build and run the containers:**
     ```bash
-    cp .env.example .env
+    sudo docker compose up -d --build
     ```
-    You can edit the `.env` file if you need to change the default settings, such as database credentials or ports.
+    This command will build the Docker images and start all the services in detached mode.
 
-3.  **Build and run the containers:**
-    ```bash
-    docker compose up -d --build
-    ```
-    This command will build the backend Docker image and start all the services in detached mode.
-
-4.  **Access the application:**
+3.  **Access the application:**
     -   **Web UI:** [http://localhost/](http://localhost/)
-    -   **API Docs:** [http://localhost/docs](http://localhost/docs)
+    -   **API Docs:** [http://localhost/api/docs](http://localhost/api/docs)
 
 5.  **Stopping the application:**
     ```bash

@@ -18,6 +18,7 @@ The `docker-compose.yml` file at the root of the project defines the services th
 
 #### `api`
 
+
 -   **Build:** Built from `docker/Dockerfile.backend`.
 -   **Purpose:** Runs the FastAPI backend application.
 -   **Environment:** Uses `NSO_DATABASE_URL`, `NSO_OUTPUT_DIR`, and `NSO_NMAP_PATH`.
@@ -33,16 +34,34 @@ The `docker-compose.yml` file at the root of the project defines the services th
 -   **Configuration:** Includes the Nginx configuration from `ops/nginx.conf`.
 -   **Depends On:** Depends on the `api` service.
 
+
 ### Volumes
 
 -   **`dbdata`:** Persists the PostgreSQL database data.
 -   **`outputs`:** Persists the Nmap scan output files.
 
-## `docker/Dockerfile.backend`
+## Dockerfiles
+
+### `docker/Dockerfile.backend`
 
 This Dockerfile defines the image for the `api` service.
+
 
 -   **Base Image:** Uses `python:3.12-slim`.
 -   **Dependencies:** Copies `requirements.txt` and builds wheels with `pip wheel` in a separate build stage. The runtime stage installs these wheels without network access.
 -   **Nmap:** Installs the `nmap` package so the backend can execute network scans.
 -   **Application Code:** Copies the backend source into the image and runs it with `gunicorn` and `uvicorn` workers.
+
+### `docker/Dockerfile.gateway`
+
+This Dockerfile defines the image for the `gateway` service. It's a multi-stage build.
+
+-   **Frontend Build Stage:**
+    -   **Base Image:** `node:20-slim`
+    -   **Purpose:** This stage builds the static frontend assets.
+    -   It installs the npm dependencies and runs the `npm run build` script.
+-   **Final Stage:**
+    -   **Base Image:** `nginx:1.27-alpine`
+    -   **Purpose:** This stage serves the built frontend.
+    -   It copies the built assets from the frontend build stage.
+    -   It also copies the `ops/nginx.conf` file to configure nginx.
