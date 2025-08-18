@@ -24,6 +24,8 @@ async def start_scan(
     concurrency: int = 6,
     out_dir: Path = Path("./data/outputs"),
 ):
+    """Kick off a scan and stream progress via the WebSocket manager."""
+
     scan = models.Scan(project_id=project_id, params_json={"flags": nmap_flags}, status="running")
     db.add(scan)
     await db.flush()  # obtain scan.id
