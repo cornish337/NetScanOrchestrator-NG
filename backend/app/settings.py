@@ -1,31 +1,31 @@
 from pathlib import Path
-from pydantic import PostgresDsn
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+import os
 
-try:
-    from pydantic_settings import BaseSettings, SettingsConfigDict
-except ModuleNotFoundError:  # fallback when dependency missing
-    from pydantic import BaseModel as BaseSettings
+# Repo root (backend/app -> parents[2] = repo root)
+REPO_ROOT = Path(__file__).resolve().parents[2]
+DATA_DIR = REPO_ROOT / "data"
+DATA_DIR.mkdir(parents=True, exist_ok=True)  # ensure ./data exists for SQLite file
 
-    def SettingsConfigDict(**kwargs):
-        return kwargs
-
+def _default_sqlite_url() -> str:
+    # Use forward slashes so SQLAlchemy parses it on Windows too
+    db_path = (DATA_DIR / "nsorchestrator.db").as_posix()
+    # async driver for SQLAlchemy 2.x
+    return f"sqliteaiosqlite:///{db_path}"
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file='.env', env_prefix='NSO_', extra='ignore')
+    # Override with NSO_DATABASE_URL in env or .env
+    database_url: str = Field(default_factory=_default_sqlite_url)
+    debug: bool = True
 
-    # Core
-    debug: bool = False
-    database_url: PostgresDsn | str
-    output_dir: Path = Path('/var/lib/netscan/outputs')
-    nmap_path: str = 'nmap'
+    # Pydantic v2 settings config
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_prefix="NSO_",
+        case_sensitive=False,
+        extra="ignore",
+    )
 
-    # Server
-    host: str = '0.0.0.0'
-    port: int = 8000
-    workers: int = 2
-
-    # WS / streaming
-    max_ws_connections: int = 200
-
-
+# Import-time singleton (FastAPI deps can also inject this if you prefer)
 settings = Settings()
