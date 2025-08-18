@@ -66,3 +66,46 @@ export async function runNmap(input: RunNmapInput): Promise<{ stdout: string }> 
   return res.json();
 }
 
+export interface Scan {
+  id: number;
+  project_id: number;
+  status: string;
+  started_at: string;
+  finished_at?: string;
+}
+
+export async function listProjectScans(projectId: number): Promise<Scan[]> {
+  const res = await fetch(apiUrl(`/projects/${projectId}/scans`));
+  if (!res.ok) throw new Error("Failed to list project scans");
+  return res.json();
+}
+
+export interface Batch {
+  id: number;
+  scan_id: number;
+  status: string;
+  target_count: number;
+  started_at?: string;
+  finished_at?: string;
+  targets: string[];
+}
+
+export async function listScanBatches(scanId: number): Promise<Batch[]> {
+  const res = await fetch(apiUrl(`/scans/${scanId}/batches`));
+  if (!res.ok) throw new Error("Failed to list scan batches");
+  return res.json();
+}
+
+export async function getTargetHistory(address: string): Promise<Scan[]> {
+  const res = await fetch(apiUrl(`/targets/${address}/history`));
+  if (!res.ok) throw new Error("Failed to get target history");
+  return res.json();
+}
+
+export async function stopScan(scanId: number) {
+  const res = await fetch(apiUrl(`/scans/${scanId}/stop`), {
+    method: "POST",
+  });
+  if (!res.ok) throw new Error("Failed to stop scan");
+  return res.json();
+}
