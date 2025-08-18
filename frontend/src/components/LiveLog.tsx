@@ -25,6 +25,8 @@ export default function LiveLog({ scanId }: { scanId: number }) {
           ]);
         } else if (msg.event === "scan_complete") {
           setLines((p) => [...p, `🏁 scan ${msg.scan_id} complete`]);
+        } else if (msg.event === "legacy_scan_complete") {
+          setLines((p) => [...p, `🏁 legacy scan complete`, JSON.stringify(msg.results, null, 2)]);
         } else if (msg.event === "connected") {
           setLines((p) => [...p, `connected to scan ${msg.scan_id}`]);
         }

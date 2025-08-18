@@ -37,6 +37,7 @@ interface StartScanInput {
   targets: string[];
   chunk_size: number;
   concurrency: number;
+  runner: string;
 }
 
 export async function startScan(input: StartScanInput) {

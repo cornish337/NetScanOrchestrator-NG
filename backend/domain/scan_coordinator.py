@@ -9,6 +9,7 @@ from ..infra.ws_hub import ws_manager
 from .runner import run_nmap_batch
 from .task_registry import TASKS
 from .xml_summary import parse_xml_summary
+from .legacy_scanner.parallel_scanner import scan_chunks_parallel
 from .xml_parser import parse_nmap_xml
 
 # very simple chunker
@@ -21,6 +22,7 @@ async def start_scan(
     project_id: int,
     nmap_flags: list[str],
     targets: list[str],
+    runner: str = "asyncio",
     chunk_size: int = 256,
     concurrency: int = 6,
     out_dir: Path = Path("./data/outputs"),
@@ -37,28 +39,33 @@ async def start_scan(
         db.add(b); batches.append(b)
     await db.commit()
 
-    sem = asyncio.Semaphore(concurrency)
+    if runner == "asyncio":
+        sem = asyncio.Semaphore(concurrency)
 
-    async def run_one(b: models.Batch):
-        async with sem:
-            await db.execute(update(models.Batch).where(models.Batch.id == b.id).values(status="running"))
-            await db.commit()
-            await ws_manager.broadcast(scan.id, {"event": "batch_start", "batch_id": b.id, "targets": b.args_json["targets"]})
+        async def run_one(b: models.Batch):
+            async with sem:
+                await db.execute(update(models.Batch).where(models.Batch.id == b.id).values(status="running"))
+                await db.commit()
+                await ws_manager.broadcast(scan.id, {"event": "batch_start", "batch_id": b.id, "targets": b.args_json["targets"]})
 
-            xml_path = Path(out_dir) / f"batch_{b.id}.xml"
-            stdout_path = Path(out_dir) / f"batch_{b.id}.stdout.log"
-            stderr_path = Path(out_dir) / f"batch_{b.id}.stderr.log"
+                xml_path = Path(out_dir) / f"batch_{b.id}.xml"
+                stdout_path = Path(out_dir) / f"batch_{b.id}.stdout.log"
+                stderr_path = Path(out_dir) / f"batch_{b.id}.stderr.log"
 
-            async for line in run_nmap_batch(b.id, b.args_json["targets"], nmap_flags, out_dir):
-                await ws_manager.broadcast(scan.id, {"event": "line", "batch_id": b.id, "line": line})
+                async for line in run_nmap_batch(b.id, b.args_json["targets"], nmap_flags, out_dir):
+                    await ws_manager.broadcast(scan.id, {"event": "line", "batch_id": b.id, "line": line})
 
-            # upsert raw result row
-            rr = models.ResultRaw(batch_id=b.id, xml_path=str(xml_path), stdout_path=str(stdout_path), stderr_path=str(stderr_path))
-            db.add(rr)
-            await db.execute(update(models.Batch).where(models.Batch.id == b.id).values(status="completed"))
-            await db.commit()
+                # upsert raw result row
+                rr = models.ResultRaw(batch_id=b.id, xml_path=str(xml_path), stdout_path=str(stdout_path), stderr_path=str(stderr_path))
+                db.add(rr)
+                await db.execute(update(models.Batch).where(models.Batch.id == b.id).values(status="completed"))
+                await db.commit()
 
-            # --- START of new code ---
+                # quick summary for demo
+                summary = parse_xml_summary(xml_path)
+                await ws_manager.broadcast(scan.id, {"event": "batch_complete", "batch_id": b.id, "summary": summary})
+
+                # --- START of new code ---
             if xml_path.exists():
                 xml_content = xml_path.read_text()
                 if xml_content:
@@ -73,13 +80,42 @@ async def start_scan(
             summary = parse_xml_summary(xml_path)
             await ws_manager.broadcast(scan.id, {"event": "batch_complete", "batch_id": b.id, "summary": summary})
 
-    tasks = []
-    for b in batches:
-        t = asyncio.create_task(run_one(b))
-        TASKS.add(scan.id, b.id, t)
-        tasks.append(t)
+        tasks = []
+        for b in batches:
+            t = asyncio.create_task(run_one(b))
+            TASKS.add(scan.id, b.id, t)
+            tasks.append(t)
 
-    await asyncio.gather(*tasks, return_exceptions=True)
+        await asyncio.gather(*tasks, return_exceptions=True)
+    else: # legacy runner
+        loop = asyncio.get_running_loop()
+
+        # The legacy runner does not provide per-batch updates, so we update all at once
+        for b in batches:
+            await db.execute(update(models.Batch).where(models.Batch.id == b.id).values(status="running"))
+        await db.commit()
+
+        # The legacy runner takes a single string for nmap options
+        nmap_options_str = " ".join(nmap_flags)
+
+        # All targets are processed in one go by the legacy runner
+        all_target_chunks = [b.args_json["targets"] for b in batches]
+
+        # Run the blocking function in an executor
+        results = await loop.run_in_executor(
+            None,  # uses the default ThreadPoolExecutor
+            scan_chunks_parallel,
+            all_target_chunks,
+            nmap_options_str,
+            concurrency  # num_processes
+        )
+
+        # Process results
+        await ws_manager.broadcast(scan.id, {"event": "legacy_scan_complete", "results": results})
+
+        for b in batches:
+            await db.execute(update(models.Batch).where(models.Batch.id == b.id).values(status="completed"))
+        await db.commit()
 
     await db.execute(update(models.Scan).where(models.Scan.id == scan.id).values(status="completed"))
     await db.commit()

@@ -25,6 +25,9 @@ Once you have a project, you can start a scan.
     -   **Chunk size:** The number of targets to include in each Nmap batch.
     -   **Concurrency:** The number of Nmap batches to run in parallel.
     -   **Targets:** The list of targets to scan, one per line. Targets can be IP addresses, hostnames, or CIDR ranges.
+    -   **Runner:** Choose the scanning engine to use:
+        -   **Asyncio:** The modern, non-blocking runner that provides real-time streaming of Nmap output. This is the recommended option.
+        -   **Legacy Parallel:** The original multiprocessing-based runner. This runner may be faster for a large number of small scans but does not provide real-time output. The results will be displayed only after the entire scan is complete.
 3.  Click the "Start Scan" button.
 
 ### 3. Monitoring a Scan
