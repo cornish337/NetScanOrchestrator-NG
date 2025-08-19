@@ -26,9 +26,9 @@ pre-commit = "^3.7.0"
 flake8 = "^6.1.0"
 mypy = "^1.8.0"
 bandit = "^1.7.5"
-pytest-md-docs = "*"
+pytest-markdown-docs = "*"
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = "^1.6"
-mkdocs-myst-parser = "^1.0"
+myst-parser = "^4.0.1"
 mkdocs-linkcheck = "^1.0"

@@ -1,5 +1,6 @@
 from __future__ import annotations
 import asyncio
+from datetime import datetime
 from pathlib import Path
 from typing import Sequence
 from ..app.settings import settings
@@ -46,7 +47,11 @@ async def start_scan(
 
         async def run_one(b: models.Batch):
             async with sem:
-                await db.execute(update(models.Batch).where(models.Batch.id == b.id).values(status="running"))
+                await db.execute(
+                    update(models.Batch)
+                    .where(models.Batch.id == b.id)
+                    .values(status="running", started_at=datetime.utcnow())
+                )
                 await db.commit()
                 await ws_manager.broadcast(scan.id, {"event": "batch_start", "batch_id": b.id, "targets": b.args_json["targets"]})
 
@@ -60,7 +65,11 @@ async def start_scan(
                 # upsert raw result row
                 rr = models.ResultRaw(batch_id=b.id, xml_path=str(xml_path), stdout_path=str(stdout_path), stderr_path=str(stderr_path))
                 db.add(rr)
-                await db.execute(update(models.Batch).where(models.Batch.id == b.id).values(status="completed"))
+                await db.execute(
+                    update(models.Batch)
+                    .where(models.Batch.id == b.id)
+                    .values(status="completed", finished_at=datetime.utcnow())
+                )
                 await db.commit()
 
                 # quick summary for demo
@@ -94,7 +103,11 @@ async def start_scan(
 
         # The legacy runner does not provide per-batch updates, so we update all at once
         for b in batches:
-            await db.execute(update(models.Batch).where(models.Batch.id == b.id).values(status="running"))
+            await db.execute(
+                update(models.Batch)
+                .where(models.Batch.id == b.id)
+                .values(status="running", started_at=datetime.utcnow())
+            )
         await db.commit()
 
         # The legacy runner takes a single string for nmap options
@@ -116,10 +129,18 @@ async def start_scan(
         await ws_manager.broadcast(scan.id, {"event": "legacy_scan_complete", "results": results})
 
         for b in batches:
-            await db.execute(update(models.Batch).where(models.Batch.id == b.id).values(status="completed"))
+            await db.execute(
+                update(models.Batch)
+                .where(models.Batch.id == b.id)
+                .values(status="completed", finished_at=datetime.utcnow())
+            )
         await db.commit()
 
-    await db.execute(update(models.Scan).where(models.Scan.id == scan.id).values(status="completed"))
+    await db.execute(
+        update(models.Scan)
+        .where(models.Scan.id == scan.id)
+        .values(status="completed", finished_at=datetime.utcnow())
+    )
     await db.commit()
     await ws_manager.broadcast(scan.id, {"event": "scan_complete", "scan_id": scan.id})
 
