@@ -81,6 +81,16 @@ export async function listProjectScans(projectId: number): Promise<Scan[]> {
   return res.json();
 }
 
+export interface ListAllScansResponse {
+  scans: Scan[];
+}
+
+export async function listAllScans(): Promise<ListAllScansResponse> {
+  const res = await fetch(apiUrl("/scans"));
+  if (!res.ok) throw new Error("Failed to list scans");
+  return res.json();
+}
+
 export interface Batch {
   id: number;
   scan_id: number;

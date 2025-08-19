@@ -2,14 +2,18 @@ import { render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 import { setupServer } from 'msw/node';
-import { http, HttpResponse } from 'msw';
+import { rest, HttpResponse } from 'msw';
+import { beforeAll, afterEach, afterAll, expect, test } from 'vitest';
 import Projects from '../pages/ProjectsPage';
 
 const server = setupServer(
-  http.get('/api/projects', () => {
+  rest.get('/api/projects', () => {
     return HttpResponse.json([
       { id: 1, name: 'Project Alpha', description: 'First' }
     ]);
+  }),
+  rest.get('/api/scans', () => {
+    return HttpResponse.json({ scans: [] });
   })
 );
 

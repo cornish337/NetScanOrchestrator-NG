@@ -4,6 +4,7 @@ import ProjectDashboardPage from "./pages/ProjectDashboardPage";
 import NewProjectPage from "./pages/NewProjectPage";
 import IPDetailsPage from "./pages/IPDetailsPage";
 import NmapRunner from "./components/NmapRunner";
+import DebugDashboardPage from "./pages/DebugDashboardPage";
 
 export default function App() {
   return (
@@ -15,6 +16,9 @@ export default function App() {
         <nav className="flex items-center gap-3">
           <Link className="btn" to="/quick-scan">
             Quick Scan
+          </Link>
+          <Link className="btn" to="/debug">
+            Debug
           </Link>
           <a
             className="btn"
@@ -35,6 +39,7 @@ export default function App() {
         <Route path="/ip/:address" element={<IPDetailsPage />} />
         <Route path="/runner" element={<NmapRunner />} />
         <Route path="/quick-scan" element={<NmapRunner />} />
+        <Route path="/debug" element={<DebugDashboardPage />} />
       </Routes>
     </div>
   );

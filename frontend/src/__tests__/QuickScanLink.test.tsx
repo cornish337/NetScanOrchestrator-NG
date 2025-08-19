@@ -1,8 +1,19 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
-import { expect, test } from 'vitest';
+import { expect, test, beforeAll, afterEach, afterAll } from 'vitest';
+import { setupServer } from 'msw/node';
+import { rest, HttpResponse } from 'msw';
 import App from '../App';
+
+const server = setupServer(
+  rest.get('/api/projects', () => HttpResponse.json([])),
+  rest.get('/api/scans', () => HttpResponse.json({ scans: [] }))
+);
+
+beforeAll(() => server.listen());
+afterEach(() => server.resetHandlers());
+afterAll(() => server.close());
 
 test('Quick Scan link navigates to NmapRunner', () => {
   const qc = new QueryClient();

@@ -1,9 +1,9 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { setupServer } from 'msw/node';
-import { http, HttpResponse } from 'msw';
-import { vi } from 'vitest';
+import { rest, HttpResponse } from 'msw';
+import { vi, beforeAll, afterEach, afterAll, expect, test, waitFor } from 'vitest';
 import ProjectDashboardPage from '../pages/ProjectDashboardPage';
 import React from 'react';
 
@@ -21,7 +21,7 @@ vi.mock('../components/ScanList', () => ({
 
 let startScanCalled = false;
 const server = setupServer(
-  http.post('/api/scans/start', async ({ request }) => {
+  rest.post('/api/scans/start', async ({ request }) => {
     startScanCalled = true;
     return HttpResponse.json({ id: 1 });
   })
