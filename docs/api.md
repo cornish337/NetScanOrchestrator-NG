@@ -73,7 +73,7 @@ List all scans for a given project.
         "id": 1,
         "project_id": 1,
         "status": "completed",
-        "created_at": "..."
+        "created_at": "2024-01-01T00:00:00Z"
       }
     ]
     ```
@@ -207,7 +207,7 @@ Get the scan history for a specific target address.
         "id": 1,
         "project_id": 1,
         "status": "completed",
-        "created_at": "..."
+        "created_at": "2024-01-01T00:00:00Z"
       }
     ]
     ```
@@ -228,7 +228,7 @@ Run a one-off Nmap command. This is a utility endpoint for direct Nmap execution
 -   **Response (200 OK):**
     ```json
     {
-      "stdout": "...",
+      "stdout": "Nmap scan report",
       "exit_code": 0
     }
     ```
@@ -294,11 +294,11 @@ A previous router still exists under `/api/scans` with simpler semantics:
         ```
     -   **`legacy_scan_complete`**: Sent when a scan using the `multiprocessing` runner is finished. The `results` field contains an array of the results from each chunk.
         ```json
-        {
-          "event": "legacy_scan_complete",
-          "results": [ ... ]
-        }
-        ```
+    {
+      "event": "legacy_scan_complete",
+      "results": []
+    }
+    ```
 
 
 ## Testing
