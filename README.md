@@ -23,6 +23,7 @@ This README provides a high-level overview of the project. For detailed document
 - **Project Management:** Organize scans into projects.
 - **Nmap Scan Orchestration:** Start, and monitor Nmap scans from the UI.
 - **Live Scan Output:** Real-time streaming of scan logs via WebSockets.
+- **Quick Scan:** Launch ad-hoc Nmap scans and view the raw results without creating a project.
 - **Concurrent Scans:** Run multiple scan batches in parallel.
 - **Target Chunking:** Split large target lists into smaller chunks for scanning.
 - **Dockerized Deployment:** Easy setup and deployment using Docker Compose.

@@ -36,6 +36,28 @@ This is the main component that orchestrates the entire UI. It is responsible fo
 
 This component provides a simple UI to run a one-off Nmap scan. It directly calls the `/api/nmap/run` endpoint and displays the raw output. This is primarily a utility for testing and debugging.
 
+### Quick Scan Page
+
+The **Quick Scan** page exposes the `NmapRunner` component as a standalone utility for fast, ad-hoc scans. It is useful when you want to probe a handful of hosts without creating a full project first.
+
+#### Entering Targets
+
+- Provide any Nmap flags in the **Flags** field. Default options are pre-filled but can be adjusted.
+- Enter one or more targets in the **Targets** textarea. Each host or network should be on its own line.
+
+#### Running Scans
+
+Click **Run Nmap** to launch the scan. The frontend sends the flags and target list to the backend's `/api/nmap/run` endpoint and waits for the result.
+
+#### Viewing Results
+
+- When the scan finishes, the raw Nmap output is shown in a scrollable box. Only the most recent lines are kept to prevent the page from growing indefinitely.
+
+#### Limitations
+
+- Results are plain text. The page does not parse the output into a structured host/port list.
+- Output is ephemeral and not saved to any project or history.
+
 ### `LiveLog.tsx`
 
 This component is responsible for displaying the live output of a scan. It takes a `scanId` as a prop and establishes a WebSocket connection to the backend. It then listens for incoming messages and appends them to a log viewer.
@@ -66,7 +88,7 @@ This module also provides a `wsUrl()` function for generating the correct WebSoc
 -   Project creation and listing.
 -   Form for starting a new scan with custom targets and flags.
 -   Live streaming of scan logs via WebSockets.
--   A separate utility for running ad-hoc Nmap commands.
+-   Quick Scan page for running ad-hoc Nmap commands.
 -   Responsive design that works on different screen sizes.
 
 ### To Be Done
