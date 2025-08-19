@@ -55,7 +55,7 @@ interface RunNmapInput {
   targets: string[];
 }
 
-export async function runNmap(input: RunNmapInput): Promise<{ stdout: string }> {
+export async function runNmap(input: RunNmapInput): Promise<{ stdout: string; hosts: Host[] }> {
   const res = await fetch(apiUrl("/nmap/run"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
