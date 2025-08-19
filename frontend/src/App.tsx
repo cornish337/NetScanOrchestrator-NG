@@ -12,14 +12,19 @@ export default function App() {
         <h1 className="text-2xl font-semibold">
           <Link to="/">NetScan Orchestrator</Link>
         </h1>
-        <a
-          className="btn"
-          href="https://github.com/cornish337/NetScanOrchestrator-NG"
-          target="_blank"
-          rel="noreferrer"
-        >
-          Repo
-        </a>
+        <nav className="flex items-center gap-3">
+          <Link className="btn" to="/quick-scan">
+            Quick Scan
+          </Link>
+          <a
+            className="btn"
+            href="https://github.com/cornish337/NetScanOrchestrator-NG"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Repo
+          </a>
+        </nav>
       </header>
 
       <Routes>
@@ -29,6 +34,7 @@ export default function App() {
         <Route path="/projects/:projectId" element={<ProjectDashboardPage />} />
         <Route path="/ip/:address" element={<IPDetailsPage />} />
         <Route path="/runner" element={<NmapRunner />} />
+        <Route path="/quick-scan" element={<NmapRunner />} />
       </Routes>
     </div>
   );
