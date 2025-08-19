@@ -1,0 +1,17 @@
+name: docker-smoke
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build backend image
+        run: docker build -f docker/Dockerfile.backend -t backend-test .
+      - name: Run nmap version
+        run: docker run --rm backend-test nmap --version
+

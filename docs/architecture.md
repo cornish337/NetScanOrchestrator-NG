@@ -4,7 +4,7 @@ This document provides a detailed overview of the NetScanOrchestrator-NG archite
 
 ## High-Level Diagram
 
-```
+```text
 +-----------------+      +-----------------+      +-----------------+
 |   Web Browser   |<---->|      Nginx      |<---->|   FastAPI App   |
 +-----------------+      +-----------------+      +-----------------+
