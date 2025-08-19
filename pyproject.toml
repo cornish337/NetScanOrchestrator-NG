@@ -27,3 +27,8 @@ flake8 = "^6.1.0"
 mypy = "^1.8.0"
 bandit = "^1.7.5"
 pytest-md-docs = "*"
+
+[tool.poetry.group.docs.dependencies]
+mkdocs = "^1.6"
+mkdocs-myst-parser = "^1.0"
+mkdocs-linkcheck = "^1.0"
