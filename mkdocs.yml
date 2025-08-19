@@ -1,0 +1,20 @@
+site_name: NetScan Orchestrator NG
+docs_dir: docs
+site_dir: site
+nav:
+  - Home: index.md
+  - Architecture: ARCHITECTURE.md
+  - Installation: install.md
+  - Usage: usage.md
+  - Backend: backend.md
+  - Frontend: frontend.md
+  - Docker: docker.md
+  - API: api.md
+plugins:
+  - search
+  - linkcheck
+  - myst-parser
+markdown_extensions:
+  - admonition
+  - toc:
+      permalink: true

@@ -21,3 +21,8 @@ httpx = "^0.27.0"
 pytest = "^8.0.0"
 async-asgi-testclient = "^1.4.11"
 pytest-timeout = "^2.4.0"
+
+[tool.poetry.group.docs.dependencies]
+mkdocs = "^1.6"
+mkdocs-myst-parser = "^1.0"
+mkdocs-linkcheck = "^1.0"
