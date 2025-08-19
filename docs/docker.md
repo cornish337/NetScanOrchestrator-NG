@@ -26,7 +26,8 @@ The `docker-compose.yml` file at the root of the project defines the services th
 -   **Environment:** Uses `NSO_DATABASE_URL`, `NSO_OUTPUT_DIR` (default `./data/outputs`), and `NSO_NMAP_PATH` (default `nmap`).
 -   **Volumes:** Mounts the named volume `outputs` at `/data/outputs` for persistent Nmap scan results.
 -   **Depends On:** Depends on the `db` service, so Docker Compose starts the database first.
--   **Capabilities:** `cap_add: [NET_RAW, NET_ADMIN]` allows Nmap to perform scans requiring elevated network privileges.
+-   **Capabilities:** `cap_add: [NET_RAW, NET_ADMIN, NET_BIND_SERVICE]` allows Nmap to perform scans requiring elevated network privileges.
+    When running the container manually, add `--cap-add=NET_RAW,NET_ADMIN,NET_BIND_SERVICE` to `docker run` to supply these capabilities.
 
 #### `gateway`
 
