@@ -26,6 +26,7 @@ Paths below are prefixed with `/api` by the application root router.
 - `POST /scans/start` – queue a multi-target scan.
   - **Body:** includes project ID, Nmap flags (default `["-T4","-Pn","-sS"]`), target list, chunk_size, and concurrency limits
   - **Response:** `{scan_id, status:"started"}`
+- `GET /scans` - list all scans with basic details
 - `POST /scans/{scan_id}/stop` – cancel all running batches for the given scan ID.
 
 Create a new project.
@@ -56,6 +57,23 @@ List all projects.
         "id": 1,
         "name": "My First Project",
         "description": "An optional description for the project."
+      }
+    ]
+    ```
+
+#### `GET /api/scans`
+
+List all scans.
+
+-   **Response (200 OK):**
+    ```json
+    [
+      {
+        "id": 1,
+        "project_id": 1,
+        "project_name": "My First Project",
+        "status": "completed",
+        "created_at": "2024-01-01T00:00:00Z"
       }
     ]
     ```

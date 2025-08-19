@@ -43,6 +43,24 @@ async def list_project_scans(project_id: int, db: AsyncSession = Depends(get_db)
     rows = (await db.execute(query)).mappings().all()
     return rows
 
+
+@router.get("/scans")
+async def list_scans(db: AsyncSession = Depends(get_db)):
+    """List all scans with project name."""
+    query = (
+        select(models.Scan, models.Project.name)
+        .join(models.Project)
+        .order_by(models.Scan.started_at.desc())
+    )
+    results = (await db.execute(query)).all()
+    scans = []
+    for scan, project_name in results:
+        # Manually create a dictionary from the Scan object
+        scan_data = {column.name: getattr(scan, column.name) for column in scan.__table__.columns}
+        scan_data["project_name"] = project_name
+        scans.append(scan_data)
+    return scans
+
 @router.get("/scans/{scan_id}/batches")
 async def list_scan_batches(scan_id: int, db: AsyncSession = Depends(get_db)):
     query = models.Batch.__table__.select().where(models.Batch.scan_id == scan_id)
