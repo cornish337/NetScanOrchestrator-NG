@@ -1,15 +1,15 @@
 from __future__ import annotations
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy import event, text
+from sqlalchemy import event
 
-DATABASE_URL = "sqlite+aiosqlite:///./data/state.db"
+from backend.app.settings import settings
 
 class Base(DeclarativeBase):
     pass
 
 engine = create_async_engine(
-    DATABASE_URL,
+    settings.database_url,
     future=True,
 )
 
