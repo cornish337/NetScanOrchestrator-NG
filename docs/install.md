@@ -85,8 +85,8 @@ A manual setup is suitable for developers who want to work on the frontend or ba
 
 The application is configured using environment variables. The backend expects the following variables (with the `NSO_` prefix):
 
--   `NSO_DATABASE_URL`: The connection string for the PostgreSQL database.
--   `NSO_OUTPUT_DIR`: The directory where Nmap scan outputs are stored.
--   `NSO_NMAP_PATH`: The path to the `nmap` executable.
+    -   `NSO_DATABASE_URL`: The connection string for the PostgreSQL database.
+    -   `NSO_OUTPUT_DIR`: Directory where Nmap scan outputs are stored (default `./data/outputs`).
+    -   `NSO_NMAP_PATH`: Path to the `nmap` executable (default `nmap`).
 
 These are set in the `docker-compose.yml` for the Docker setup. For a manual setup, you can use a `.env` file or set them in your shell.

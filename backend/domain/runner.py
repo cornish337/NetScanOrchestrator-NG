@@ -3,18 +3,23 @@ import asyncio
 from pathlib import Path
 from typing import AsyncIterator, Sequence
 
+from ..app.settings import settings
+
 async def run_nmap_batch(
     batch_id: int,
     targets: Sequence[str],
     nmap_flags: Sequence[str],
-    out_dir: Path,
+    out_dir: Path | None = None,
+    nmap_path: str | None = None,
 ) -> AsyncIterator[str]:
+    out_dir = out_dir or settings.output_dir
+    nmap_path = nmap_path or settings.nmap_path
     out_dir.mkdir(parents=True, exist_ok=True)
     xml_path = out_dir / f"batch_{batch_id}.xml"
     stdout_path = out_dir / f"batch_{batch_id}.stdout.log"
     stderr_path = out_dir / f"batch_{batch_id}.stderr.log"
 
-    cmd = ["nmap", *nmap_flags, "-oX", str(xml_path), *targets]
+    cmd = [nmap_path, *nmap_flags, "-oX", str(xml_path), *targets]
 
     proc = await asyncio.create_subprocess_exec(
         *cmd,
