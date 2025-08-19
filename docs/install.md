@@ -59,7 +59,7 @@ A manual setup is suitable for developers who want to work on the frontend or ba
 
 5.  **Run the backend server:**
     ```bash
-    poetry run uvicorn backend.app:app --reload
+    poetry run uvicorn backend.main:app --reload
     ```
     The backend will be available at `http://localhost:8000`.
 
