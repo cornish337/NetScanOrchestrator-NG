@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import { runNmap } from "../lib/api";
+import { runNmap, type Host, type Port } from "../lib/api";
 
 export default function NmapRunner() {
   const [flags, setFlags] = useState("-T4 -Pn -sV");
@@ -15,6 +15,7 @@ export default function NmapRunner() {
   });
 
   const lines = runM.data ? runM.data.stdout.split(/\r?\n/).slice(-2000) : [];
+  const hosts: Host[] = runM.data?.hosts || [];
 
   return (
     <section className="card space-y-4">
@@ -48,6 +49,33 @@ export default function NmapRunner() {
         <pre className="card max-h-[40vh] overflow-auto text-sm font-mono leading-tight whitespace-pre-wrap">
           {lines.join("\n")}
         </pre>
+      )}
+      {hosts.length > 0 && (
+        <div className="card">
+          <h3 className="font-semibold mb-2">Hosts</h3>
+          <table className="table w-full text-sm">
+            <thead>
+              <tr>
+                <th>Host</th>
+                <th>Port</th>
+                <th>Protocol</th>
+                <th>Service</th>
+              </tr>
+            </thead>
+            <tbody>
+              {hosts.flatMap((h: Host) =>
+                h.ports.map((p: Port) => (
+                  <tr key={`${h.address}-${p.port_number}-${p.protocol}`}>
+                    <td>{h.address}</td>
+                    <td>{p.port_number}</td>
+                    <td>{p.protocol}</td>
+                    <td>{p.service_name}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       )}
     </section>
   );

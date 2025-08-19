@@ -1,5 +1,6 @@
 from __future__ import annotations
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -13,6 +14,7 @@ from ..domain.scan_coordinator import start_scan
 from ..domain.task_registry import TASKS
 from ..domain.runner import run_nmap_batch
 from ..domain.target_expander import expand_targets
+from ..domain.xml_parser import parse_nmap_xml
 
 router = APIRouter()
 
@@ -127,8 +129,13 @@ async def nmap_run(payload: NmapRunIn):
         if stderr_path.exists():
             err_text = stderr_path.read_text(errors="ignore")
         raise HTTPException(status_code=500, detail=err_text or f"nmap exited with code {exit_code}")
+    hosts = []
+    xml_path = out_dir / f"batch_{batch_id}.xml"
+    if xml_path.exists():
+        xml_content = xml_path.read_text(errors="ignore")
+        hosts = parse_nmap_xml(xml_content)
 
-    return {"stdout": "\n".join(lines), "exit_code": exit_code}
+    return {"stdout": "\n".join(lines), "hosts": jsonable_encoder(hosts)}
 
 @router.post("/scans/start")
 async def scans_start(payload: StartScanIn, db: AsyncSession = Depends(get_db)):
