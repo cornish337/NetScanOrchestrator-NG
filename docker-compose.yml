@@ -35,10 +35,10 @@ services:
       - "8000:8000"
     command: gunicorn -k uvicorn.workers.UvicornWorker backend.main:app --bind 0.0.0.0:8000 --workers 1
 
-  gateway:
+  frontend:
     build:
       context: .
-      dockerfile: docker/Dockerfile.gateway
+      dockerfile: docker/Dockerfile.frontend
     ports:
       - "8080:80"
     depends_on:
