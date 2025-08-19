@@ -4,6 +4,7 @@ from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from sqlalchemy import select
 import time
 import re
 from ..infra.db import SessionLocal
@@ -43,6 +44,37 @@ async def list_project_scans(project_id: int, db: AsyncSession = Depends(get_db)
     rows = (await db.execute(query)).mappings().all()
     return rows
 
+@router.get("/scans")
+async def list_scans(status: str | None = None, db: AsyncSession = Depends(get_db)):
+    """List scans with associated project information.
+
+    Parameters
+    ----------
+    status: optional str
+        Filter scans by status. If omitted, all scans are returned.
+    """
+    query = select(models.Scan, models.Project).join(models.Project)
+    if status:
+        query = query.where(models.Scan.status == status)
+    rows = await db.execute(query)
+    results = []
+    for scan, project in rows.all():
+        results.append(
+            {
+                "id": scan.id,
+                "status": scan.status,
+                "started_at": scan.started_at,
+                "finished_at": scan.finished_at,
+                "project": {
+                    "id": project.id,
+                    "name": project.name,
+                    "description": project.description,
+                    "created_at": project.created_at,
+                },
+            }
+        )
+    return results
+
 @router.get("/scans/{scan_id}/batches")
 async def list_scan_batches(scan_id: int, db: AsyncSession = Depends(get_db)):
     query = models.Batch.__table__.select().where(models.Batch.scan_id == scan_id)
@@ -50,8 +82,6 @@ async def list_scan_batches(scan_id: int, db: AsyncSession = Depends(get_db)):
     # This is inefficient, we should probably store targets in their own table
     # and link them to batches. For now, we'll just return the args.
     return [dict(row, targets=row["args_json"].get("targets", [])) for row in rows]
-
-from sqlalchemy import select
 
 @router.get("/targets/{address}/history")
 async def get_target_history(address: str, db: AsyncSession = Depends(get_db)):
