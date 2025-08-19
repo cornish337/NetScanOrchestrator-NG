@@ -7,15 +7,21 @@ WORKDIR /app
 # Build stage
 FROM base AS build
 RUN apt-get update && apt-get install -y --no-install-recommends build-essential && rm -rf /var/lib/apt/lists/*
-COPY requirements.txt ./
+COPY requirements-runtime.txt ./requirements.txt
 RUN pip wheel --no-cache-dir --wheel-dir /wheels -r requirements.txt
 
-# Runtime
-FROM base AS runtime
-RUN addgroup --system app && adduser --system --ingroup app app
+# Runtime stage
+ FROM base AS runtime
+ RUN addgroup --system app && adduser --system --ingroup app app
 COPY --from=build /wheels /wheels
 COPY --from=build /app/requirements.txt /app/requirements.txt
-RUN pip install --no-cache-dir --no-index --find-links=/wheels -r /app/requirements.txt
+# Debug: list wheels to ensure they’re present
+RUN set -eux; \
+    ls -lah /wheels; \
+    python -m pip install --no-cache-dir --no-index --find-links=/wheels -r /app/requirements.txt \
+    || (echo "Offline install failed, falling back to online install..." >&2; \
+        python -m pip install --no-cache-dir -r /app/requirements.txt)
+
 
 # Install Nmap and set capabilities for raw socket access
 RUN set -eux; \
@@ -26,6 +32,11 @@ RUN set -eux; \
     rm -rf /var/lib/apt/lists/*
 
 COPY backend/ /app/backend/
+
+# Ensure runtime directories exist and are writable before dropping privileges
+RUN set -eux; \
+    mkdir -p /app/data /data/outputs; \
+    chown -R app:app /app /data
 
 USER app
 EXPOSE 8000

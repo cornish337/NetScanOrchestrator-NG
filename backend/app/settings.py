@@ -6,16 +6,19 @@ import os
 # Repo root (backend/app -> parents[2] = repo root)
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = REPO_ROOT / "data"
-DATA_DIR.mkdir(parents=True, exist_ok=True)  # ensure ./data exists for SQLite file
+# Old [delete] DATA_DIR.mkdir(parents=True, exist_ok=True)  # ensure ./data exists for SQLite file
 
 
 def _default_output_dir() -> Path:
-    path = DATA_DIR / "outputs"
+    # Create only when needed, not at module import
+    path = (DATA_DIR / "outputs")
     path.mkdir(parents=True, exist_ok=True)
     return path
 
 def _default_sqlite_url() -> str:
     # Use forward slashes so SQLAlchemy parses it on Windows too
+    # Create only for the SQLite default path, not for external Postgres
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
     db_path = (DATA_DIR / "nsorchestrator.db").as_posix()
     # async driver for SQLAlchemy 2.x
     return f"sqliteaiosqlite:///{db_path}"
