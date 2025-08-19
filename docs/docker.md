@@ -2,6 +2,8 @@
 
 This document explains the Docker setup for the NetScanOrchestrator project. Docker is the recommended way to run the application, as it simplifies dependency management and deployment. Backend dependencies are managed with `requirements.txt` instead of Poetry.
 
+Before starting, copy the provided `.env.example` file to `.env` and adjust values for `NSO_DATABASE_URL`, `NSO_OUTPUT_DIR`, and `NSO_NMAP_PATH` so that Docker Compose can load them.
+
 ## `docker-compose.yml`
 
 The `docker-compose.yml` file at the root of the project defines the services that make up the application.

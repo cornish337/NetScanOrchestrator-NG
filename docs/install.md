@@ -89,4 +89,10 @@ The application is configured using environment variables. The backend expects t
     -   `NSO_OUTPUT_DIR`: Directory where Nmap scan outputs are stored (default `./data/outputs`).
     -   `NSO_NMAP_PATH`: Path to the `nmap` executable (default `nmap`).
 
+A `.env.example` file at the project root provides sample values for these variables. Copy it to `.env` and customize it for your environment:
+
+```bash
+cp .env.example .env
+```
+
 These are set in the `docker-compose.yml` for the Docker setup. For a manual setup, you can use a `.env` file or set them in your shell.
