@@ -21,6 +21,7 @@ services:
       dockerfile: docker/Dockerfile.backend
     environment:
       NSO_DATABASE_URL: postgresql+psycopg://postgres:netscan@db:5432/netscan
+      DATABASE_URL: postgresql+psycopg://postgres:netscan@db:5432/netscan
       NSO_OUTPUT_DIR: /data/outputs
       NSO_NMAP_PATH: nmap
     volumes:
@@ -34,6 +35,7 @@ services:
       - NET_BIND_SERVICE
     ports:
       - "8000:8000"
+    command: gunicorn -k uvicorn.workers.UvicornWorker backend.main:app --bind 0.0.0.0:8000 --workers 1
 
   gateway:
     build:
