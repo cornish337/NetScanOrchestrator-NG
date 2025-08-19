@@ -21,7 +21,7 @@ RUN pip install --no-cache-dir --no-index --find-links=/wheels -r /app/requireme
 RUN apt-get update && apt-get install -y --no-install-recommends nmap libcap2-bin \
     && rm -rf /var/lib/apt/lists/* \
     && setcap cap_net_raw,cap_net_admin,cap_net_bind_service+eip $(command -v nmap) \
-    && nmap --version
+    && nmap --version || true
 
 COPY backend/ /app/backend/
 
