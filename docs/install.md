@@ -49,8 +49,8 @@ A manual setup is suitable for developers who want to work on the frontend or ba
     poetry install
     ```
 
-3.  **Set up the database:**
-    You'll need a running PostgreSQL server. Configure the `NSO_DATABASE_URL` environment variable to point to your database.
+3.  **Configure the database connection:**
+    By default, the backend stores data in a local SQLite file under `./data`. To use a different database such as PostgreSQL, set the `NSO_DATABASE_URL` environment variable to your connection string.
 
 4.  **Run database migrations:**
     ```bash
@@ -85,7 +85,7 @@ A manual setup is suitable for developers who want to work on the frontend or ba
 
 The application is configured using environment variables. The backend expects the following variables (with the `NSO_` prefix):
 
-    -   `NSO_DATABASE_URL`: The connection string for the PostgreSQL database.
+    -   `NSO_DATABASE_URL`: The database connection string (defaults to a local SQLite file).
     -   `NSO_OUTPUT_DIR`: Directory where Nmap scan outputs are stored (default `./data/outputs`).
     -   `NSO_NMAP_PATH`: Path to the `nmap` executable (default `nmap`).
 
