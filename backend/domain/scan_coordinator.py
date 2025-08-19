@@ -2,6 +2,7 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 from typing import Sequence
+from ..app.settings import settings
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import update
 from ..infra import models
@@ -25,9 +26,10 @@ async def start_scan(
     runner: str = "asyncio",
     chunk_size: int = 256,
     concurrency: int = 6,
-    out_dir: Path = Path("./data/outputs"),
+    out_dir: Path | None = None,
 ):
     """Kick off a scan and stream progress via the WebSocket manager."""
+    out_dir = out_dir or settings.output_dir
 
     scan = models.Scan(project_id=project_id, params_json={"flags": nmap_flags}, status="running")
     db.add(scan)
@@ -52,7 +54,7 @@ async def start_scan(
                 stdout_path = Path(out_dir) / f"batch_{b.id}.stdout.log"
                 stderr_path = Path(out_dir) / f"batch_{b.id}.stderr.log"
 
-                async for line in run_nmap_batch(b.id, b.args_json["targets"], nmap_flags, out_dir):
+                async for line in run_nmap_batch(b.id, b.args_json["targets"], nmap_flags, out_dir=out_dir):
                     await ws_manager.broadcast(scan.id, {"event": "line", "batch_id": b.id, "line": line})
 
                 # upsert raw result row

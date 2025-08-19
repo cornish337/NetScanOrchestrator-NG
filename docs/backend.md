@@ -7,7 +7,7 @@ This document provides an overview of the backend application, which is a FastAP
 -   **Framework:** [FastAPI](https://fastapi.tiangolo.com/)
 -   **Language:** Python
 -   **Database:** [PostgreSQL](https://www.postgresql.org/)
--   **ORM:** [SQLAlchemy](https://www.sqlalchemy.org/) (with `asyncpg` for async support)
+-   **ORM:** [SQLAlchemy](https://www.sqlalchemy.org/) (with `psycopg` for async support)
 -   **Migrations:** [Alembic](https://alembic.sqlalchemy.org/)
 -   **Dependency Management:** [Poetry](https://python-poetry.org/)
 
@@ -18,7 +18,7 @@ The backend code is located in the `backend/` directory and follows a layered ar
 -   `backend/api/`: The API layer, responsible for handling HTTP requests and WebSocket connections.
 -   `backend/domain/`: The domain layer, containing the core business logic of the application.
 -   `backend/infra/`: The infrastructure layer, responsible for interacting with external systems like the database and WebSockets.
--   `backend/app.py`: The main entry point for the FastAPI application.
+-   `backend/main.py`: The main entry point for the FastAPI application.
 -   `alembic/`: The directory for Alembic database migrations.
 
 ## Key Modules

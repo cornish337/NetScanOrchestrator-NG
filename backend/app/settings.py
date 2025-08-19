@@ -8,6 +8,12 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = REPO_ROOT / "data"
 DATA_DIR.mkdir(parents=True, exist_ok=True)  # ensure ./data exists for SQLite file
 
+
+def _default_output_dir() -> Path:
+    path = DATA_DIR / "outputs"
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
 def _default_sqlite_url() -> str:
     # Use forward slashes so SQLAlchemy parses it on Windows too
     db_path = (DATA_DIR / "nsorchestrator.db").as_posix()
@@ -18,6 +24,8 @@ class Settings(BaseSettings):
     # Override with NSO_DATABASE_URL in env or .env
     database_url: str = Field(default_factory=_default_sqlite_url)
     debug: bool = True
+    output_dir: Path = Field(default_factory=_default_output_dir)
+    nmap_path: str = "nmap"
 
     # Pydantic v2 settings config
     model_config = SettingsConfigDict(

@@ -4,9 +4,12 @@
 FROM node:20-slim AS frontend-build
 WORKDIR /app
 COPY frontend/package*.json ./
-RUN npm install
+# Use npm ci for reproducible installs and leverage lockfile
+RUN npm ci
 COPY frontend/ .
 RUN npm run build
+# Reinstall production dependencies only to reduce image size
+RUN npm ci --omit=dev
 
 # Final stage with nginx
 FROM public.ecr.aws/y9w1g0t0/nginxinc/nginx-unprivileged:1.21-alpine

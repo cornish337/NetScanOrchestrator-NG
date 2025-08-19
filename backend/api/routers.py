@@ -3,10 +3,10 @@ from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, HTTPExce
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from pathlib import Path
 import time
 import re
 from ..infra.db import SessionLocal
+from ..app.settings import settings
 from ..infra import models
 from ..infra.ws_hub import ws_manager
 from ..domain.scan_coordinator import start_scan
@@ -102,11 +102,11 @@ class NmapRunIn(BaseModel):
 @router.post("/nmap/run")
 async def nmap_run(payload: NmapRunIn):
     batch_id = int(time.time())
-    out_dir = Path("./data/tmp")
+    out_dir = settings.output_dir / "tmp"
     lines: list[str] = []
     stderr_path = out_dir / f"batch_{batch_id}.stderr.log"
     try:
-        async for line in run_nmap_batch(batch_id, payload.targets, payload.nmap_flags, out_dir):
+        async for line in run_nmap_batch(batch_id, payload.targets, payload.nmap_flags, out_dir=out_dir):
             lines.append(line)
     except Exception as e:
         err_text = ""

@@ -19,8 +19,8 @@ services:
       dockerfile: docker/Dockerfile.backend
     environment:
       NSO_DATABASE_URL: postgresql+psycopg://postgres:netscan@db:5432/netscan
-      NSO_OUTPUT_DIR: /data/outputs
-      NSO_NMAP_PATH: nmap
+      NSO_OUTPUT_DIR: /data/outputs  # default: ./data/outputs
+      NSO_NMAP_PATH: nmap           # default: nmap
     volumes:
       - outputs:/data/outputs
     depends_on:

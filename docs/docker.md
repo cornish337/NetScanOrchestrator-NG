@@ -1,6 +1,8 @@
 # Docker Documentation
 
-This document explains the Docker setup for the NetScanOrchestrator project. Docker is the recommended way to run the application, as it simplifies dependency management and deployment.
+This document explains the Docker setup for the NetScanOrchestrator project. Docker is the recommended way to run the application, as it simplifies dependency management and deployment. Backend dependencies are managed with `requirements.txt` instead of Poetry.
+
+Before starting, copy the provided `.env.example` file to `.env` and adjust values for `NSO_DATABASE_URL`, `NSO_OUTPUT_DIR`, and `NSO_NMAP_PATH` so that Docker Compose can load them.
 
 ## `docker-compose.yml`
 
@@ -18,19 +20,22 @@ The `docker-compose.yml` file at the root of the project defines the services th
 
 #### `api`
 
--   **Build:** This service is built from the `docker/Dockerfile.backend` file.
--   **Purpose:** This service runs the FastAPI backend application.
--   **Environment:** It sets the environment variables required by the backend, such as the database URL and the output directory for scans.
--   **Volumes:** It mounts a named volume `outputs` to `/data/outputs`. This is where the Nmap scan results are stored, ensuring they persist.
--   **Depends On:** It depends on the `db` service, so Docker Compose will start the database before starting the API.
--   **Capabilities:** `cap_add: [NET_RAW, NET_ADMIN]` is necessary for Nmap to perform certain types of scans (like SYN scans) from within the container.
+
+-   **Build:** Built from `docker/Dockerfile.backend`.
+-   **Purpose:** Runs the FastAPI backend application.
+-   **Environment:** Uses `NSO_DATABASE_URL`, `NSO_OUTPUT_DIR` (default `./data/outputs`), and `NSO_NMAP_PATH` (default `nmap`).
+-   **Volumes:** Mounts the named volume `outputs` at `/data/outputs` for persistent Nmap scan results.
+-   **Depends On:** Depends on the `db` service, so Docker Compose starts the database first.
+-   **Capabilities:** `cap_add: [NET_RAW, NET_ADMIN]` allows Nmap to perform scans requiring elevated network privileges.
 
 #### `gateway`
 
--   **Build:** This service is built from the `docker/Dockerfile.gateway` file.
--   **Purpose:** This service acts as a gateway to the application. It serves the frontend and proxies requests to the `api` service.
--   **Ports:** It exposes port `80` on the host machine.
--   **Depends On:** It depends on the `api` service.
+-   **Build:** Built from `docker/Dockerfile.gateway`, which first compiles the frontend with Node and then serves the static files with Nginx.
+-   **Purpose:** Serves the built frontend assets and proxies API and WebSocket traffic to the `api` service.
+-   **Ports:** Exposes port `80` on the host machine.
+-   **Configuration:** Includes the Nginx configuration from `ops/nginx.conf`.
+-   **Depends On:** Depends on the `api` service.
+
 
 ### Volumes
 
@@ -43,21 +48,22 @@ The `docker-compose.yml` file at the root of the project defines the services th
 
 This Dockerfile defines the image for the `api` service.
 
--   **Base Image:** It starts from a `python:3.12-slim` base image.
--   **Dependencies:** It copies the `requirements.txt` file and installs the Python dependencies using `pip`. This is done in a separate layer to take advantage of Docker's layer caching.
--   **Application Code:** It copies the backend application code into the image.
--   **Command:** The default command runs the application using `gunicorn` with `uvicorn` workers, which is a production-ready setup for a FastAPI application.
+
+-   **Base Image:** Uses `python:3.12-slim`.
+-   **Dependencies:** Copies `requirements.txt` and builds wheels with `pip wheel` in a separate build stage. The runtime stage installs these wheels without network access. The project uses `requirements.txt` instead of Poetry for dependency management.
+-   **Nmap:** After the Issue 4 fix, the Dockerfile explicitly installs the `nmap` package and sets the necessary capabilities so the backend can execute network scans.
+-   **Application Code:** Copies the backend source into the image and runs it with `gunicorn` and `uvicorn` workers.
 
 ### `docker/Dockerfile.gateway`
 
-This Dockerfile defines the image for the `gateway` service. It's a multi-stage build.
+This Dockerfile defines the image for the `gateway` service. It's a multi-stage build that compiles the frontend with Node and then serves the static files with Nginx.
 
 -   **Frontend Build Stage:**
     -   **Base Image:** `node:20-slim`
     -   **Purpose:** This stage builds the static frontend assets.
     -   It installs the npm dependencies and runs the `npm run build` script.
 -   **Final Stage:**
-    -   **Base Image:** `nginx:1.27-alpine`
-    -   **Purpose:** This stage serves the built frontend.
+    -   **Base Image:** `public.ecr.aws/y9w1g0t0/nginxinc/nginx-unprivileged:1.21-alpine`
+    -   **Purpose:** This stage serves the built frontend with Nginx.
     -   It copies the built assets from the frontend build stage.
-    -   It also copies the `ops/nginx.conf` file to configure nginx.
+    -   It also copies the `ops/nginx.conf` file to configure Nginx.

@@ -1,14 +1,32 @@
 # API Documentation
 
-This document provides a detailed reference for the NetScanOrchestrator's REST and WebSocket APIs.
+## Overview
+The service is a FastAPI application that coordinates Nmap scans and streams progress to clients over WebSockets. Scan artifacts are written to disk and tracked in a relational database for later parsing and summarization.
 
-## REST API
+## Data Model
+- **Project** – uniquely named collection of targets and scans
+- **Scan** – records each launched scan, its parameters, status, and associated batches
+- **Batch** – one chunk of targets run as a sub-task; stores count, arguments, and result link
+- **ResultRaw** – file paths to the XML/stdout/stderr artifacts for a batch
 
-The REST API is the primary way to interact with the application programmatically. The API base path is `/api`.
+## REST Endpoints
+Paths below are prefixed with `/api` by the application root router.
 
 ### Projects
+- `POST /projects` – create a project with name and optional description
+- `GET /projects` – list all projects stored in the database
 
-#### `POST /api/projects`
+### Ad-hoc Nmap Execution
+- `POST /nmap/run` – execute a single Nmap run.
+  - **Body:** `{"nmap_flags": [...], "targets": [...]}`
+  - Streams Nmap output, captures logs, and returns `{stdout, exit_code}`; non-zero exit codes return HTTP 500 with stderr text
+
+
+### Managed Scans
+- `POST /scans/start` – queue a multi-target scan.
+  - **Body:** includes project ID, Nmap flags (default `["-T4","-Pn","-sS"]`), target list, chunk_size, and concurrency limits
+  - **Response:** `{scan_id, status:"started"}`
+- `POST /scans/{scan_id}/stop` – cancel all running batches for the given scan ID.
 
 Create a new project.
 
@@ -218,28 +236,27 @@ Run a one-off Nmap command. This is a utility endpoint for direct Nmap execution
     If the Nmap command fails, the response will have a status code of 500 and the body will contain the stderr output from Nmap.
 
 ## WebSocket API
+- `/ws/scans/{scan_id}` – join a room for real-time updates on a scan.
 
-The WebSocket API is used for streaming live output from running scans.
+Upon connection, the server sends `{event:"connected", scan_id}`.
 
-### Connection URL
+### Event Stream
+During `start_scan`, batches are scheduled and progress is emitted:
 
-`ws://<host>/ws/scans/{scan_id}`
+Event | Payload fields
+----- | -------------
+`batch_start` | `batch_id`, `targets` for the chunk being processed
+`line` | `batch_id`, `line` for each stdout line from Nmap
+`batch_complete` | `batch_id`, summary of hosts and open ports parsed from XML
+`scan_complete` | `scan_id` when all batches finish
 
--   **URL Parameters:**
-    -   `scan_id` (integer): The ID of the scan to monitor.
+## Legacy Scan Router
+A previous router still exists under `/api/scans` with simpler semantics:
 
-### Messages
 
-The server sends JSON-encoded messages to the client.
-
--   **On Connection:**
-    When a client first connects, the server sends a confirmation message.
-    ```json
-    {
-      "event": "connected",
-      "scan_id": 123
-    }
-    ```
+- `POST /api/scans/` to start a single-batch scan with optional flags
+- `POST /api/scans/{scan_id}/stop` to cancel it
+- WebSocket `/api/scans/ws/{scan_id}` for raw stdout lines
 
 -   **Scan Events:**
     During a scan, the server sends various event messages. The `event` field determines the type of the message.
@@ -283,4 +300,6 @@ The server sends JSON-encoded messages to the client.
         }
         ```
 
-The client does not need to send any messages to the server; the connection is one-way (server-to-client) after the initial handshake.
+
+## Testing
+⚠️ No automated tests were executed; analysis is based solely on static source review

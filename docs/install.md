@@ -59,7 +59,7 @@ A manual setup is suitable for developers who want to work on the frontend or ba
 
 5.  **Run the backend server:**
     ```bash
-    poetry run uvicorn backend.app:app --reload
+    poetry run uvicorn backend.main:app --reload
     ```
     The backend will be available at `http://localhost:8000`.
 
@@ -85,8 +85,14 @@ A manual setup is suitable for developers who want to work on the frontend or ba
 
 The application is configured using environment variables. The backend expects the following variables (with the `NSO_` prefix):
 
--   `NSO_DATABASE_URL`: The connection string for the PostgreSQL database.
--   `NSO_OUTPUT_DIR`: The directory where Nmap scan outputs are stored.
--   `NSO_NMAP_PATH`: The path to the `nmap` executable.
+    -   `NSO_DATABASE_URL`: The connection string for the PostgreSQL database.
+    -   `NSO_OUTPUT_DIR`: Directory where Nmap scan outputs are stored (default `./data/outputs`).
+    -   `NSO_NMAP_PATH`: Path to the `nmap` executable (default `nmap`).
+
+A `.env.example` file at the project root provides sample values for these variables. Copy it to `.env` and customize it for your environment:
+
+```bash
+cp .env.example .env
+```
 
 These are set in the `docker-compose.yml` for the Docker setup. For a manual setup, you can use a `.env` file or set them in your shell.
