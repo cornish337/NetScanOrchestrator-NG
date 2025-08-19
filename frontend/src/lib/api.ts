@@ -75,9 +75,19 @@ export interface Scan {
   finished_at?: string;
 }
 
+export interface ScanWithProject extends Scan {
+  project_name: string;
+}
+
 export async function listProjectScans(projectId: number): Promise<Scan[]> {
   const res = await fetch(apiUrl(`/projects/${projectId}/scans`));
   if (!res.ok) throw new Error("Failed to list project scans");
+  return res.json();
+}
+
+export async function listAllScans(): Promise<ScanWithProject[]> {
+  const res = await fetch(apiUrl("/scans"));
+  if (!res.ok) throw new Error("Failed to list scans");
   return res.json();
 }
 

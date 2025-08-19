@@ -53,6 +53,23 @@ async def list_scan_batches(scan_id: int, db: AsyncSession = Depends(get_db)):
 
 from sqlalchemy import select
 
+@router.get("/scans")
+async def list_all_scans(db: AsyncSession = Depends(get_db)):
+    query = (
+        select(
+            models.Scan.id,
+            models.Scan.project_id,
+            models.Project.name.label("project_name"),
+            models.Scan.status,
+            models.Scan.started_at,
+            models.Scan.finished_at,
+        )
+        .select_from(models.Scan)
+        .join(models.Project, models.Scan.project_id == models.Project.id)
+    )
+    rows = (await db.execute(query)).mappings().all()
+    return rows
+
 @router.get("/targets/{address}/history")
 async def get_target_history(address: str, db: AsyncSession = Depends(get_db)):
     # Find the project associated with the target address
