@@ -4,6 +4,7 @@ import ProjectDashboardPage from "./pages/ProjectDashboardPage";
 import NewProjectPage from "./pages/NewProjectPage";
 import IPDetailsPage from "./pages/IPDetailsPage";
 import NmapRunner from "./components/NmapRunner";
+import DebugDashboardPage from "./pages/DebugDashboardPage";
 
 export default function App() {
   return (
@@ -35,6 +36,7 @@ export default function App() {
         <Route path="/ip/:address" element={<IPDetailsPage />} />
         <Route path="/runner" element={<NmapRunner />} />
         <Route path="/quick-scan" element={<NmapRunner />} />
+        <Route path="/debug" element={<DebugDashboardPage />} />
       </Routes>
     </div>
   );

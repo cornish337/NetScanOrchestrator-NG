@@ -76,6 +76,29 @@ def test_scan_start_and_stop(client, monkeypatch):
     assert resp.json() == {"scan_id": 123, "status": "stopping"}
 
 
+def test_list_all_scans(client, monkeypatch):
+    resp = client.post("/api/projects", json={"name": "proj1"})
+    project_id = resp.json()["id"]
+
+    async def fake_start_scan(db, project_id, nmap_flags, targets, runner, chunk_size, concurrency):
+        scan = routers.models.Scan(project_id=project_id, params_json={}, status="running")
+        db.add(scan)
+        await db.commit()
+        await db.refresh(scan)
+        return scan.id
+
+    monkeypatch.setattr(routers, "start_scan", fake_start_scan)
+
+    resp = client.post("/api/scans/start", json={"project_id": project_id, "targets": ["127.0.0.1"]})
+    assert resp.status_code == 200
+    scan_id = resp.json()["scan_id"]
+
+    resp = client.get("/api/scans")
+    assert resp.status_code == 200
+    scans = resp.json()
+    assert any(s["id"] == scan_id and s["project_name"] == "proj1" for s in scans)
+
+
 def test_target_expansion(client):
     resp = client.post(
         "/api/targets/expand",
