@@ -1,0 +1,42 @@
+# docker-compose.override.yml
+# Dev-only overlay: hot reload for backend and frontend.
+# Keep your base docker-compose.yml as the prod-like definition.
+
+services:
+  api:
+    # Dev command: run uvicorn with reload (single process)
+    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      # Mount backend source for hot reload
+      - ./backend:/app/backend
+      # Keep the data/output mounts from base compose intact (if present)
+    environment:
+      # Belt & braces: ensure Postgres URL is visible to dev server too
+      NSO_DATABASE_URL: ${NSO_DATABASE_URL:-postgresql+psycopg://postgres:netscan@db:5432/netscan}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://postgres:netscan@db:5432/netscan}
+
+  # Separate dev server for the frontend (Vite)
+  frontend-dev:
+    image: node:20-alpine
+    working_dir: /app
+    depends_on:
+      - api
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+    environment:
+      # Encourage same-origin API calls via gateway-style path
+      VITE_API_BASE: /api
+    command: >
+      sh -lc "
+        corepack enable &&
+        (npm ci || npm install --legacy-peer-deps) &&
+        npm run dev -- --host 0.0.0.0 --port 5173
+      "
+    # Keeps container running in dev; logs visible with `docker compose logs -f frontend-dev`
+
+  # Optional: expose DB to host for tools (pgAdmin, DBeaver)
+  db:
+    ports:
+      - "5432:5432"
